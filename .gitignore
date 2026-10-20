@@ -43,7 +43,7 @@ node_modules/
 dist/
 .env
 
-/generated/prisma
+src/app/generated/prisma
 .agents
 .claude
 .windsurf
