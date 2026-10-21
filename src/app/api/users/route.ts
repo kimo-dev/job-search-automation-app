@@ -1,53 +1,28 @@
-// import { db } from "@/prisma/db";
-// import { NextRequest, NextResponse } from "next/server";
-
+import { UniqueConstraintException } from "@/exceptions/uniqueConstraintException";
 import { NextRequest, NextResponse } from "next/server";
 
-// export async function POST(request: NextRequest) {
-//   const body = await request.json();
-//   // validations
-//   const { firstName, lastName, email, password } = body;
-//   if (!firstName || !lastName || !email || !password) {
-//     return NextResponse.json({
-//       success: false,
-//       error: "Missing required fields",
-//       missingFields: {
-//         isFirstNameMissing: !firstName,
-//         isLastNameMissing: !lastName,
-//         isEmailMissing: !email,
-//         isPasswordMissing: !password
-//       }
-//     }, { status: 400 })
-//   }
-//   // verify email format
-//   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-//   if (!emailRegex.test(email)) {
-//     return NextResponse.json({ error: "Bad email format" }, { status: 400 });
-//   }
-//   // check if this user exist
-//   // hash password
-//   try {
-//     const user = await db.orm.public.User.create({
-//       firstName: firstName,
-//       lastName: lastName,
-//       email: email,
-//       password: password,
-//     });
-//     const reponseData = {
-//       id: user.id,
-//       firstName: user.firstName,
-//       lastName: user.lastName,
-//       email: user.email,
-//       role: user.role
-//     }
-//     return NextResponse.json({ user: reponseData }, { status: 201 })
-//   } catch (error) {
-//     console.log(error);
-//     return NextResponse.json({ error: "Failed to created the user" }, { status: 500 });
-//   }
-
-
-// }
 export async function POST(request: NextRequest) {
-    return NextResponse.json({ message: " Hello world!" })
+    // const body = await request.json();
+    // // validations
+    // const parsedData = userValidationSchema.safeParse(body);
+    // if (!parsedData.success) {
+    //     return NextResponse.json({
+    //         success: false,
+    //         error: parsedData.error.issues.map(i => ({ path: i.path, message: i.message }))
+    //     }, { status: 400 })
+    // }
+    // // hash password
+    // try {
+    //     const user = await UserService.createUser(parsedData.data);
+    //     return NextResponse.json({ user: user }, { status: 201 })
+    // } catch (error: any) {
+    //     if(error instanceof UniqueConstraintException){
+    //         return NextResponse.json({ error: error.message }, { status: 400 })
+    //     }
+    //     console.log(error);
+    //     return NextResponse.json({ error: error }, { status: 500 });
+    // }
+        return NextResponse.json({ message: "Hello world!" }, { status: 201 })
+
+
 }

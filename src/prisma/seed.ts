@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaClient, Role } from "@/generated/prisma/client";
 const connectionString = `${process.env.DATABASE_URL}`;
 
 export const prisma = new PrismaClient({
@@ -26,7 +26,7 @@ async function main() {
         lastName: "Morgan",
         email: "alex.morgan@example.com",
         password: passwordHash,
-        role: "ADMIN",
+        role: Role.USER,
         isVerified: true,
       },
       {
@@ -34,7 +34,7 @@ async function main() {
         lastName: "Chen",
         email: "maya.chen@example.com",
         password: passwordHash,
-        role: "USER",
+        role: Role.USER,
         isVerified: true,
       },
       {
@@ -42,7 +42,7 @@ async function main() {
         lastName: "Patel",
         email: "sam.patel@example.com",
         password: passwordHash,
-        role: "USER",
+        role: Role.USER,
         isVerified: false,
       },
     ].map((user) =>
