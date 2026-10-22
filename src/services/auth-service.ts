@@ -1,17 +1,13 @@
-import config from "@/config";
-import { InvalidTokenException, TokenExpiredException } from "@/exceptions/http/AuthenticationException";
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { ServiceException } from "@/exceptions/serviceException";
 import { AuthRepository } from "@/repository/auth-repository";
 import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/types/auth";
 import bcrypt from 'bcrypt';
-import jwt from "jsonwebtoken";
+import { EncryptService } from "./encrypt-service";
 
 export class AuthService {
 
-    constructor(private secretKey = config.auth.secretKey, private tokenExpiration = config.auth.tokenExpritaion) { }
     static async registerUser(data: User): Promise<SafeUser> {
-        const passwordHash = await bcrypt.hash(data.password, 12);
+        const passwordHash = await EncryptService.encrypt(data.password, 12);
         const user = await AuthRepository.register({
             firstName: data.firstName,
             lastName: data.lastName,

@@ -1,5 +1,6 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { UniqueConstraintException } from "@/exceptions/uniqueConstraintException";
+import { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
 import { SafeUser, User, UserByEmail } from "@/types/auth";
 
@@ -23,12 +24,11 @@ export class AuthRepository {
                 email: user.email,
                 role: user.role
             }
-        } catch (error: any) {
-            const message = error instanceof Error ? error.message : String(error);
-            if (message === "Unique constraint failed") {
+        } catch (error: unknown) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new UniqueConstraintException("Email is not unique, User with this email aready exists!")
             }
-            throw new Error("Failed to create user", error);
+            throw new Error("Failed to create user", { cause: error });
         }
     }
 
