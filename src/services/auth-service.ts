@@ -3,31 +3,34 @@ import { AuthRepository } from "@/repository/auth-repository";
 import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/types/auth";
 import bcrypt from 'bcrypt';
 import { EncryptService } from "./encrypt-service";
+import { InvalidPasswordException } from "@/exceptions/http/AuthenticationException";
 
 export class AuthService {
 
     static async registerUser(data: User): Promise<SafeUser> {
-        const passwordHash = await EncryptService.encrypt(data.password, 12);
-        const user = await AuthRepository.register({
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            role: data.role,
-            password: passwordHash
-        });
+        const user = await AuthRepository.register(data);
         return user;
     }
 
-    static async login(data: LoginUserSchema): Promise<UserByEmail> {
+    static async login(data: LoginUserSchema): Promise<SafeUser> {
         const user = await AuthRepository.findUserByEmail(data.email);
         if (!user) {
             throw new NotFoundException(`User with email ${data.email} was not found.`)
         }
-        const passwordMatch = bcrypt.compare(data.password, user.password);
+        const passwordMatch = await EncryptService.compare(data.password, user.password);
+        console.log("passwordMatch", passwordMatch);
+        console.log("hashed password", user.password);
+        console.log("slient password", data.password);
         if (!passwordMatch) {
-            throw new NotFoundException("Invalid password");
+            throw new InvalidPasswordException("Invalid password");
         }
-        return user;
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+        };
     }
 
     // generateToken(payload: UserPayload): string {

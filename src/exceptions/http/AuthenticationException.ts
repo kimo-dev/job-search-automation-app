@@ -7,6 +7,13 @@ export class AuthenticationException extends httpException {
     }
 }
 
+export class InvalidPasswordException extends httpException {
+    constructor(message: string){
+        super(401,message);
+        this.name = "InvalidPasswordException";
+    }
+}
+
 export class TokenExpiredException extends AuthenticationException {
     constructor(){
         super("Token expired");
