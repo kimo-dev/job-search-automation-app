@@ -4,6 +4,7 @@ import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/typ
 import bcrypt from 'bcrypt';
 import { EncryptService } from "./encrypt-service";
 import { InvalidPasswordException } from "@/exceptions/http/AuthenticationException";
+import { UserMapper } from "@/mappers/user-mapper";
 
 export class AuthService {
 
@@ -15,22 +16,13 @@ export class AuthService {
     static async login(data: LoginUserSchema): Promise<SafeUser> {
         const user = await AuthRepository.findUserByEmail(data.email);
         if (!user) {
-            throw new NotFoundException(`User with email ${data.email} was not found.`)
+            throw new NotFoundException(`Invalid email, User with email ${data.email} was not found.`)
         }
         const passwordMatch = await EncryptService.compare(data.password, user.password);
-        console.log("passwordMatch", passwordMatch);
-        console.log("hashed password", user.password);
-        console.log("slient password", data.password);
         if (!passwordMatch) {
             throw new InvalidPasswordException("Invalid password");
         }
-        return {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role,
-        };
+        return new UserMapper().map(user);
     }
 
     // generateToken(payload: UserPayload): string {
