@@ -1,7 +1,6 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { AuthRepository } from "@/repository/auth-repository";
 import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/types/auth";
-import bcrypt from 'bcrypt';
 import { EncryptService } from "./encrypt-service";
 import { InvalidPasswordException } from "@/exceptions/http/AuthenticationException";
 
