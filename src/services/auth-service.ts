@@ -18,11 +18,11 @@ export class AuthService {
             throw new NotFoundException(`User with email ${data.email} was not found.`)
         }
         const passwordMatch = await EncryptService.compare(data.password, user.password);
-        console.log("passwordMatch", passwordMatch);
-        console.log("hashed password", user.password);
-        console.log("slient password", data.password);
         if (!passwordMatch) {
             throw new InvalidPasswordException("Invalid password");
+        }
+        if(!user.isVerified){
+            throw new NotFoundException(`User with email ${data.email} is not verified, please verifiy your email.`)
         }
         return {
             id: user.id,

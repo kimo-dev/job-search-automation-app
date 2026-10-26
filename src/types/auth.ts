@@ -32,5 +32,5 @@ export type LoginUserSchema = z.infer<typeof loginUserValidationSchema>;
 
 export type SafeUser = Omit<User, "password"> & { id: string };
 
-export type UserByEmail  = { id: string } & User
+export type UserByEmail  = { id: string, isVerified: boolean } & User
 // export type ReturnedLoginUser = { accessToken: string } & UserByEmail;
