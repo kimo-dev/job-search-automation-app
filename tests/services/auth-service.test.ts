@@ -120,7 +120,6 @@ describe("Authservice", () => {
 
             (AuthRepository.findUserByEmail as jest.Mock).mockResolvedValue(mockedUser);
             (EncryptService.compare as jest.Mock).mockResolvedValue(false);
-
             await expect(
                 AuthService.login({
                     email: "john@example.com",
