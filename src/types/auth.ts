@@ -34,3 +34,17 @@ export type SafeUser = Omit<User, "password"> & { id: string };
 
 export type UserByEmail  = { id: string, isVerified: boolean } & User
 // export type ReturnedLoginUser = { accessToken: string } & UserByEmail;
+
+export type UserProfileSchema = {
+    id: string,
+    userId: string,
+    email: string,
+    title: string,
+    position: string,
+    bio: string,
+    yearsExp: string,
+    githubUrl: string,
+    linkedinUrl: string,
+    createdAt: Date,
+    updatedAt: string
+}
