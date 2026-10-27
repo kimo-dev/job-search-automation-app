@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String              @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String              @unique
+  password        String
+  role            String              @default("USER")
+  isVerified      Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @default(now())
+
+  userCV          UserCV?              
+  userProfile     UserProfile?         
+  skills          UserSkill[]
+  experiences     UserExperience[]
+  educations      UserEducation[]
+  certifications  UserCertification[]
+}
+
+model UserCV {
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  fileUrl   String
+  fileName  String
+  fileSize  Int
+  parsedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id])
+}
+
+model UserProfile {
+  id          String      @id @default(uuid())
+  userId      String      @unique
+  cvEmail     String
+  title       String
+  position    String
+  yearsExp    Int
+  githubUrl   String?
+  linkedinUrl String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id])
+
+}
+
+model UserSkill {
+  id          String      @id @default(uuid())
+  userId      String
+  skillName   String
+  proficiency String
+  yearsExp    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id])
+}
+
+model UserExperience {
+  id          String      @id @default(uuid())
+  userId      String
+  jobTitle    String
+  companyName String
+  startDate   DateTime?
+  endDate     DateTime?
+  isCurrent   Boolean
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id])
+}
+
+model UserEducation {
+  id            String      @id @default(uuid())
+  userId        String
+  degree        String
+  fieldOfStudy  String
+  institution   String
+  description   String?
+  gradDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id])
+
+}
+
+model UserCertification {
+  id            String      @id @default(uuid())
+  userId        String
+  certName      String
+  issuer        String
+  issuedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id])
+
+}
