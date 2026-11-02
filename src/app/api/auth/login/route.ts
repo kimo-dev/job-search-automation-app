@@ -29,12 +29,12 @@ export async function POST(req: NextRequest) {
         }
         await persistAuthentication(userPayload);
         
-        return NextResponse.json({ message: "Login Succesfull", user }, { status: 200 });;
+        return NextResponse.json({ success: true, message: "Login Succesfull", user }, { status: 200 });;
 
     } catch (error: any) {
         if (error instanceof InvalidPasswordException || error instanceof NotFoundException) {
-            return NextResponse.json({ error: error.message }, { status: 400 })
+            return NextResponse.json({ success: false, error: error.message }, { status: 400 })
         }
-        return NextResponse.json({ error: error }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong. Failed to login!" }, { status: 500 });
     }
 }

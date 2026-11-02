@@ -1,6 +1,6 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma, UserProfile } from "@/generated/prisma/client";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { UserProfileSchema } from "@/types/user";
 
 export class UserRepository {

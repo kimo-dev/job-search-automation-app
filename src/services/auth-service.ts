@@ -22,16 +22,16 @@ export class AuthService {
             throw new InvalidPasswordException("Invalid password");
         }
         return new UserMapper().map(user);
-        if(!user.isVerified){
-            throw new NotFoundException(`User with email ${data.email} is not verified, please verifiy your email.`)
-        }
-        return {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role,
-        };
+        // if(!user.isVerified){
+        //     throw new NotFoundException(`User with email ${data.email} is not verified, please verifiy your email.`)
+        // }
+        // return {
+        //     id: user.id,
+        //     firstName: user.firstName,
+        //     lastName: user.lastName,
+        //     email: user.email,
+        //     role: user.role,
+        // };
     }
 
     // generateToken(payload: UserPayload): string {

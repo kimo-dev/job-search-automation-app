@@ -96,7 +96,7 @@ export async function getAuthenticatedUser(): Promise<UserPayload | null> {
             throw new AuthenticationFailedException();
         }
         const newToken = refreshToken(token_refresh!);
-        setTokenIntoCookie(newToken);
+        await setTokenIntoCookie(newToken);
         token = newToken;
     }
 

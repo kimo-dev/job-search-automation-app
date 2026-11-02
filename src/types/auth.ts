@@ -36,7 +36,7 @@ export type SafeUser = Omit<User, "password"> & GlobalFields & { role: Role };
 
 export type UserByEmail  = GlobalFields & User
 // export type ReturnedLoginUser = { accessToken: string } & UserByEmail;
-export type UserByEmail  = { id: string, isVerified: boolean } & User
+//export type UserByEmail  = { id: string, isVerified: boolean } & User
 // export type ReturnedLoginUser = { accessToken: string } & UserByEmail;
 
 export type UserProfileSchema = {

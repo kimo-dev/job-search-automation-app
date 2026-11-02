@@ -14,7 +14,7 @@ export const GET = IsAuthenticated(async (_req: NextRequest, user) => {
         if (error instanceof NotFoundException) {
             return NextResponse.json({ success: false,  error: error.message }, { status: 404 })
         }
-        return NextResponse.json({ error: error }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong. Failed to get the profile!" }, { status: 500 });
 
     }
 });
@@ -33,13 +33,14 @@ export const PUT = IsAuthenticated(async (req: NextRequest, user) => {
         const profile = await UserService.updateProfile(user.userId, parsedData.data);
         return NextResponse.json({
             success: true,
+            message: "User profile updated successfully",
             profile,
         }, { status: 200 });
     } catch (error) {
         if( error instanceof NotFoundException ) {
-            return NextResponse.json({ error: error.message }, { status: 404} )
+            return NextResponse.json({ success: false, error: error.message }, { status: 404} )
         }
-        return NextResponse.json({ error: error }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong while updating your profile." }, { status: 500 });
     }
 })
 

@@ -10,7 +10,7 @@ export function IsAuthenticated(fn: (req: NextRequest, user: NonNullable<Awaited
             if (!user) {
                 return NextResponse.json({
                     success: false,
-                    error: "Unauthorizde",
+                    error: "Unauthorized",
                     message: "Authentication is required"
                 }, { status: 401 });
 

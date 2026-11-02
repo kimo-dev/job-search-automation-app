@@ -18,21 +18,6 @@ jest.mock("@/services/encrypt-service", () => ({
     }
 }));
 
-jest.mock("@/mappers/user-mapper", () => {
-    return {
-        UserMapper: jest.fn().mockImplementation(() => ({
-            map: jest.fn((user) => ({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                createdAt: user.createdAt
-            }))
-        }))
-    }
-});
-
 describe("Authservice", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -97,35 +82,36 @@ describe("Authservice", () => {
             role: Role.USER,
             createdAt: new Date("2026-10-19T21:08:32.275Z"),
         });
-        it("login should throw NotFoundException if user does not exist", async () => {
-            (AuthRepository.findUserByEmail as jest.Mock).mockResolvedValue(null);
 
-            await expect(
-                AuthService.login({
-                    email: "missing@example.com",
-                    password: "secret123",
-                })
-            ).rejects.toThrow(NotFoundException);
-        });
-        it("login should throw InvalidPasswordException if password does not match", async () => {
-            const mockedUser = {
-                id: "1",
-                firstName: "John",
-                lastName: "Doe",
+    });
+    it("login should throw NotFoundException if user does not exist", async () => {
+        (AuthRepository.findUserByEmail as jest.Mock).mockResolvedValue(null);
+
+        await expect(
+            AuthService.login({
+                email: "missing@example.com",
+                password: "secret123",
+            })
+        ).rejects.toThrow(NotFoundException);
+    });
+    it("login should throw InvalidPasswordException if password does not match", async () => {
+        const mockedUser = {
+            id: "1",
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+            password: "hashed-password",
+            role: Role.USER,
+            createdAt: new Date("2026-10-19T21:08:32.275Z"),
+        };
+
+        (AuthRepository.findUserByEmail as jest.Mock).mockResolvedValue(mockedUser);
+        (EncryptService.compare as jest.Mock).mockResolvedValue(false);
+        await expect(
+            AuthService.login({
                 email: "john@example.com",
-                password: "hashed-password",
-                role: Role.USER,
-                createdAt: new Date("2026-10-19T21:08:32.275Z"),
-            };
-
-            (AuthRepository.findUserByEmail as jest.Mock).mockResolvedValue(mockedUser);
-            (EncryptService.compare as jest.Mock).mockResolvedValue(false);
-            await expect(
-                AuthService.login({
-                    email: "john@example.com",
-                    password: "wrong-password",
-                })
-            ).rejects.toThrow(InvalidPasswordException);
-        });
+                password: "wrong-password",
+            })
+        ).rejects.toThrow(InvalidPasswordException);
     });
 });
