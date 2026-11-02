@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
     try {
         const user = await AuthService.registerUser(parsedData.data);
-        return NextResponse.json({ user: user }, { status: 201 })
+        return NextResponse.json({ message: "User registered successfully", user: user }, { status: 201 })
     } catch (error: any) {
         if (error instanceof UniqueConstraintException) {
             return NextResponse.json({ error: error.message }, { status: 400 })

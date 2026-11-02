@@ -3,6 +3,7 @@ import { AuthRepository } from "@/repository/auth-repository";
 import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/types/auth";
 import { EncryptService } from "./encrypt-service";
 import { InvalidPasswordException } from "@/exceptions/http/AuthenticationException";
+import { UserMapper } from "@/mappers/user-mapper";
 
 export class AuthService {
 
@@ -14,12 +15,13 @@ export class AuthService {
     static async login(data: LoginUserSchema): Promise<SafeUser> {
         const user = await AuthRepository.findUserByEmail(data.email);
         if (!user) {
-            throw new NotFoundException(`User with email ${data.email} was not found.`)
+            throw new NotFoundException(`Invalid email, User with email ${data.email} was not found.`)
         }
         const passwordMatch = await EncryptService.compare(data.password, user.password);
         if (!passwordMatch) {
             throw new InvalidPasswordException("Invalid password");
         }
+        return new UserMapper().map(user);
         if(!user.isVerified){
             throw new NotFoundException(`User with email ${data.email} is not verified, please verifiy your email.`)
         }
