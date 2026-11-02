@@ -2,9 +2,10 @@ import { AuthenticationFailedException } from "@/exceptions/http/AuthenticationE
 import { getAuthenticatedUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export function IsAuthenticated(fn: (req: NextRequest, user: NonNullable<Awaited<ReturnType<typeof getAuthenticatedUser>>>
+
+export function IsAuthenticated<T>(fn: (req: NextRequest, user: NonNullable<Awaited<ReturnType<typeof getAuthenticatedUser>>>, context: T
 ) => Promise<NextResponse>) {
-    return async (req: NextRequest) => {
+    return async (req: NextRequest, context: T) => {
         try {
             const user = await getAuthenticatedUser();
             if (!user) {
@@ -15,7 +16,7 @@ export function IsAuthenticated(fn: (req: NextRequest, user: NonNullable<Awaited
                 }, { status: 401 });
 
             }
-            return await fn(req, user);
+            return await fn(req, user, context);
         } catch (error) {
             if (error instanceof AuthenticationFailedException) {
                 return NextResponse.json(

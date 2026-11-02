@@ -1,7 +1,7 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createSkillSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, updateSkillSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
 
@@ -58,5 +58,40 @@ export class UserRepository {
             }
         });
         return skill;
+    }
+
+    static async updateSkill(userId: string, skillId: string, data: updateSkillSchema) {
+        try {
+            const skill = await prisma.userSkill.update({
+                where: { id: skillId, userId: userId },
+                data: {
+                    proficiency: data.proficiency,
+                    yearsExp: data.years_exp,
+                }
+            });
+            return skill;
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025" ) {
+                throw new NotFoundException(
+                    "Skill not found"
+                );
+            }
+            throw error;
+        }
+    }
+
+    static async deleteSkill(userId: string, skillId: string) {
+        try {
+            return await prisma.userSkill.delete({
+                where: { id: skillId, userId: userId }
+            });
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025" ) {
+                throw new NotFoundException(
+                    "Skill not found"
+                );
+            }
+            throw error;
+        }
     }
 }

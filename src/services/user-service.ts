@@ -2,7 +2,7 @@ import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
 import { UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { UserRepository } from "@/repository/user-repository";
-import { createSkillSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, updateSkillSchema, UserProfileSchema } from "@/types/user";
 
 export class UserService {
 
@@ -33,6 +33,15 @@ export class UserService {
         }
         const skill = await UserRepository.createSkill(userId, data);
         return skill;
+    }
+    static async updateSkill(userId: string, skillId: string,  profile: updateSkillSchema): Promise<UserSkill> {
+        return await UserRepository.updateSkill(userId, skillId,  profile);
+
+    }
+
+    static async deleteSkill(userId: string, skillId: string): Promise<void> {
+        await UserRepository.deleteSkill(userId, skillId);
+
     }
 
 }
