@@ -1,12 +1,17 @@
 import config from "@/config";
-import { InvalidTokenException, TokenExpiredException } from "@/exceptions/http/AuthenticationException";
+import { AuthenticationFailedException, InvalidTokenException, TokenExpiredException } from "@/exceptions/http/AuthenticationException";
 import { ServiceException } from "@/exceptions/serviceException";
 import { UserPayload } from "@/types/auth";
 import jwt from "jsonwebtoken";
 import ms from "ms";
 import { cookies } from 'next/headers';
+import { NextRequest } from "next/server";
 
-export function generateToken(payload: UserPayload) : string {
+export interface AuthRequest extends Request {
+    user: UserPayload;
+}
+
+export function generateToken(payload: UserPayload): string {
     return jwt.sign(payload, config.auth.secretKey, {
         expiresIn: config.auth.tokenExpiration
     });
@@ -33,7 +38,15 @@ export function verifiyToken(token: string): UserPayload {
         throw new ServiceException("Token verification failed");
     }
 }
-export function verifyRefreshToken(refreshToken: string) : string {
+export function refreshToken(refreshToken: string) {
+    const payload = verifiyToken(refreshToken);
+    if (!payload) {
+        throw new InvalidTokenException();
+    }
+    const { iat, exp, ...userPayload } = payload;
+    return generateToken(userPayload);
+}
+export function verifyRefreshToken(refreshToken: string): string {
     const payload = verifiyToken(refreshToken);
     if (!payload) {
         throw new InvalidTokenException();
@@ -72,4 +85,37 @@ export async function persistAuthentication(payload: UserPayload) {
     const refreshToken = generateRefreshToken(payload);
     await setTokenIntoCookie(token);
     await setRefreshTokenIntoCookie(refreshToken);
+}
+
+export async function getAuthenticatedUser(): Promise<UserPayload | null> {
+    const cookieStore = await cookies();
+    let token = cookieStore.get("access_token")?.value;
+    const token_refresh = cookieStore.get("refresh_token")?.value;
+    if (!token) {
+        if (!token_refresh) {
+            throw new AuthenticationFailedException();
+        }
+        const newToken = refreshToken(token_refresh!);
+        setTokenIntoCookie(newToken);
+        token = newToken;
+    }
+
+    try {
+        const  payload  = verifiyToken(token);
+        if (
+            typeof payload.userId !== "string" ||
+            typeof payload.email !== "string" ||
+            typeof payload.role !== "string"
+        ) {
+            return null;
+        }
+        return {
+            userId: payload.userId,
+            email: payload.email,
+            role: payload.role
+        }
+    } catch (error) {
+        return null;
+    }
+
 }

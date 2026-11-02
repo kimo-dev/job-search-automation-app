@@ -1,7 +1,6 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { AuthRepository } from "@/repository/auth-repository";
 import { LoginUserSchema, SafeUser, User, UserByEmail, UserPayload } from "@/types/auth";
-import bcrypt from 'bcrypt';
 import { EncryptService } from "./encrypt-service";
 import { InvalidPasswordException } from "@/exceptions/http/AuthenticationException";
 import { UserMapper } from "@/mappers/user-mapper";
@@ -23,6 +22,16 @@ export class AuthService {
             throw new InvalidPasswordException("Invalid password");
         }
         return new UserMapper().map(user);
+        if(!user.isVerified){
+            throw new NotFoundException(`User with email ${data.email} is not verified, please verifiy your email.`)
+        }
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+        };
     }
 
     // generateToken(payload: UserPayload): string {
