@@ -1,6 +1,8 @@
-import { UserProfile } from "@/generated/prisma/client";
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { UserProfile, UserSkill } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 import { UserRepository } from "@/repository/user-repository";
-import { UserProfileSchema } from "@/types/user";
+import { createSkillSchema, UserProfileSchema } from "@/types/user";
 
 export class UserService {
 
@@ -12,6 +14,25 @@ export class UserService {
     static async updateProfile(userId: string, profile: UserProfileSchema): Promise<UserProfile> {
         return await UserRepository.updateProfile(userId, profile);
 
+    }
+
+    static async getAllSkills(userId: string): Promise<UserSkill[]> {
+        const userSkills = await UserRepository.getAllSkills(userId);
+        return userSkills;
+    }
+
+    static async addSkill(userId: string, data: createSkillSchema): Promise<UserSkill> {
+        const alreadyExist  = await prisma.userSkill.findFirst({
+            where: {
+                userId,
+                skillName: data.skill_name
+            }
+        });
+        if(alreadyExist) {
+            throw new AlreadyExistsException();
+        }
+        const skill = await UserRepository.createSkill(userId, data);
+        return skill;
     }
 
 }

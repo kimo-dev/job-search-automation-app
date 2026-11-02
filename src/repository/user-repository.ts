@@ -1,7 +1,7 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { Prisma, UserProfile } from "@/generated/prisma/client";
+import { Prisma, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { UserProfileSchema } from "@/types/user";
+import { createSkillSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
 
@@ -39,5 +39,24 @@ export class UserRepository {
 
             throw error;
         }
+    }
+
+    static async getAllSkills(userId: string): Promise<UserSkill[]> {
+        const skills = await prisma.userSkill.findMany({
+            where: { userId }
+        });
+        return skills;
+    }
+
+    static async createSkill(userId: string,data: createSkillSchema): Promise<UserSkill> {
+        const skill = await prisma.userSkill.create({
+            data: {
+                userId: userId,
+                skillName: data.skill_name,
+                proficiency: data.proficiency ?? "beginner",
+                yearsExp: data.years_exp ?? 0
+            }
+        });
+        return skill;
     }
 }
