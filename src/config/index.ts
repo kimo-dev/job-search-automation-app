@@ -4,6 +4,7 @@ import { StringValue } from "ms";
 
 export default {
     isProduction: process.env.NODE_ENV === "production",
+    web_url: process.env.WEB_URL || "http://localhost:3000",
     auth: {
         secretKey: (process.env.JWT_SECRET_KEY || "secret_0123456789") as StringValue,
         tokenExpiration: (process.env.TOKEN_EXPIRATION || "15m") as StringValue, 
