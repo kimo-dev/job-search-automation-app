@@ -5,15 +5,24 @@ import { GET as profileGET } from "@/app/api/users/profile/route";
 import { PUT as profilePUT } from "@/app/api/users/profile/route";
 import { GET as experienceGET } from "@/app/api/users/experience/route";
 import { POST as experiencePOST } from "@/app/api/users/experience/route";
+import { PUT as experiencePUT } from "@/app/api/users/experience/[experienceId]/route";
+import { DELETE as experienceDELETE } from "@/app/api/users/experience/[experienceId]/route";
+
+
 import { GET as skillsGET } from "@/app/api/users/skills/route";
 import { POST as skillsPOST } from "@/app/api/users/skills/route";
+import { PUT as skillsPUT } from "@/app/api/users/skills/[skillId]/route";
+import { DELETE as skillsDELETE } from "@/app/api/users/skills/[skillId]/route";
+
 
 import { NextRequest } from "next/server";
 import config from "@/config";
 import { AuthenticationFailedException } from "@/exceptions/http/AuthenticationException";
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { UserProfileSchema } from "@/types/user";
+import { updateSkillSchema, UserProfileSchema } from "@/types/user";
 import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { RouterContext } from "next/dist/shared/lib/router-context.shared-runtime";
+import { JSXElementConstructor } from "react";
 
 jest.mock("@/services/user-service", () => ({
     UserService: {
@@ -45,13 +54,15 @@ const createRequest = (route: string, method: string, body?: object,): NextReque
 };
 
 
+
+
 describe("testing user api endpoints", () => {
     const mockedUser = {
         userId: "42b4cef5-8349-4786-bccf-a4ac3ad8da2e",
         email: "test@example.com",
         role: "USER"
     };
-    const mockedProfile : UserProfile = {
+    const mockedProfile: UserProfile = {
         id: "51e89c26-72ec-4e27-b606-a4899cbdce15",
         userId: "42b4cef5-8349-4786-bccf-a4ac3ad8da2e",
         cvEmail: "test@example.com",
@@ -64,7 +75,7 @@ describe("testing user api endpoints", () => {
         createdAt: new Date("2026-11-04T09:56:59.289Z"),
         updatedAt: new Date("2026-11-04T09:56:59.289Z"),
     }
-    const mockedUpdateProfileSchema :  UserProfileSchema = {
+    const mockedUpdateProfileSchema: UserProfileSchema = {
         title: "Software Engineer",
         position: "full stack dveloper",
         yearsExp: 3,
@@ -72,7 +83,8 @@ describe("testing user api endpoints", () => {
         githubUrl: "https://github.com/test",
         linkedinUrl: "https://linkedin.com/in/test",
     }
-    const mockedExperience : UserExperience = {
+    const mockedExperienceId = "51e89c26-72ec-4e27-b606-a4899cbdce15";
+    const mockedExperience: UserExperience = {
         id: "51e89c26-72ec-4e27-b606-a4899cbdce15",
         userId: mockedUser.userId,
         jobTitle: "Software Engineer",
@@ -92,7 +104,8 @@ describe("testing user api endpoints", () => {
         is_current: false,
         description: "Working as a full stack developer"
     };
-    const mockedskill : UserSkill = {
+    const mockedSkillId = "607d7ba3-af5a-48a0-833b-d6f85cb83721";
+    const mockedskill: UserSkill = {
         id: "607d7ba3-af5a-48a0-833b-d6f85cb83721",
         userId: mockedUser.userId,
         skillName: "Python",
@@ -101,13 +114,29 @@ describe("testing user api endpoints", () => {
         createdAt: new Date("2026-10-19T21:08:33.671Z"),
         updatedAt: new Date("2026-10-19T21:08:33.671Z")
     };
-    const mockedvalidSkillData= {
+    const mockedvalidSkillData = {
         skill_name: "Javascript",
         proficiency: "beginner",
         years_exp: 3
     };
+    const mockedValidUpdateSkillData = {
+        proficiency: "beginner",
+        years_exp: 3
+    }
+    const createContext = <T extends string>(
+        paramName: T,
+        id?: string
+    ) => ({
+        params: Promise.resolve({
+            [paramName]: id ?? (
+                paramName === "skillId"
+                    ? mockedSkillId
+                    : mockedExperienceId
+            )
+        }) as Promise<Record<T, string>>
+    });
     beforeEach(() => {
-            jest.clearAllMocks();
+        jest.clearAllMocks();
     });
     describe("GET user profile test endpoints /api/users/profile", () => {
         it("should return 401 if authentication fails", async () => {
@@ -225,7 +254,7 @@ describe("testing user api endpoints", () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
 
-            
+
 
             const request = createRequest(
                 "/api/users/profile",
@@ -384,7 +413,7 @@ describe("testing user api endpoints", () => {
 
             const response = await experienceGET(request, {});
 
-            const result = await response.json(); 
+            const result = await response.json();
 
             expect(response.status).toBe(500);
             expect(result.success).toBe(false);
@@ -395,11 +424,11 @@ describe("testing user api endpoints", () => {
         });
     });
     describe("POST user experience endpoint test /api/users/experience", () => {
-       it("should return 401 if the user is not authenticated", async () => {
+        it("should return 401 if the user is not authenticated", async () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
-            const request = createRequest("/api/users/experience","POST",mockedvalidExperienceData);
+            const request = createRequest("/api/users/experience", "POST", mockedvalidExperienceData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -421,7 +450,7 @@ describe("testing user api endpoints", () => {
                 is_current: "not-a-boolean"
             };
 
-            const request = createRequest("/api/users/experiences","POST", invalidData);
+            const request = createRequest("/api/users/experiences", "POST", invalidData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -496,7 +525,7 @@ describe("testing user api endpoints", () => {
                 new Error("Database error")
             );
 
-            const request = createRequest( "/api/users/experiences", "POST", mockedvalidExperienceData);
+            const request = createRequest("/api/users/experiences", "POST", mockedvalidExperienceData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -517,6 +546,274 @@ describe("testing user api endpoints", () => {
             );
         });
     });
+
+
+
+
+
+
+    describe("PUT user experience api enpdpoits /api/users/experience/[experienceId]", () => {
+        it("should return 401 if the user is not authenticated", async () => {
+
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
+
+            const request = createRequest(`/api/users/experience/${mockedExperienceId}`, "PUT", mockedvalidExperienceData);
+
+            const response = await experiencePUT(request, createContext("experienceId", mockedExperienceId));
+            const result = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(result.success).toBe(false);
+            expect(result.error).toBe("Unauthorized");
+            expect(result.message).toBe("Authentication is required");
+
+            expect(UserService.updateUserExperience).not.toHaveBeenCalled();
+        });
+        it("should update a user experience successfully", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateUserExperience as jest.Mock).mockResolvedValue(mockedExperience);
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "PUT",
+                mockedvalidExperienceData,
+            );
+
+            const response = await experiencePUT(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(responseBody.success).toBe(true);
+            expect(responseBody.experience).toEqual(JSON.parse(JSON.stringify(mockedExperience)));
+            expect(responseBody.message).toBe("Experience updated successfully");
+
+            expect(UserService.updateUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId,
+                {
+                    ...mockedvalidExperienceData,
+                    start_date: new Date(mockedvalidExperienceData.start_date),
+                    end_date: new Date(mockedvalidExperienceData.end_date)
+                }
+            );
+        });
+        it("should return 400 if the experince ID is missing", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const request = createRequest(
+                "/api/users/experience/",
+                "PUT",
+                mockedValidUpdateSkillData
+            );
+
+            const response = await experiencePUT(request, createContext("experienceId", ""));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Experience ID is required");
+
+            expect(UserService.updateUserExperience).not.toHaveBeenCalled();
+        });
+        it("should return 400 if the request body is invalid", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const invalidExperience = {
+                job_title: "",
+                "is_current": "not boolean"
+            };
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "PUT",
+                invalidExperience,
+            );
+
+            const response = await experiencePUT(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBeDefined();
+
+            expect(UserService.updateUserExperience).not.toHaveBeenCalled();
+        });
+        it("should return 404 if the user experience does not exist", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateUserExperience as jest.Mock).mockRejectedValue(
+                new NotFoundException("Experience not found")
+            );
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "PUT",
+                mockedvalidExperienceData,
+            );
+
+            const response = await experiencePUT(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(404);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Experience not found");
+
+            expect(UserService.updateUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId,
+                {
+                    ...mockedvalidExperienceData,
+                    start_date: new Date(mockedvalidExperienceData.start_date),
+                    end_date: new Date(mockedvalidExperienceData.end_date)
+                }
+            );
+        });
+        it("should return 500 if updating the user experience fails", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateUserExperience as jest.Mock).mockRejectedValue(
+                new Error("Database error")
+            );
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "PUT",
+                mockedvalidExperienceData,
+            );
+
+            const response = await experiencePUT(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe(
+                "Something went wrong while updating your profile."
+            );
+            expect(UserService.updateUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId,
+                {
+                    ...mockedvalidExperienceData,
+                    start_date: new Date(mockedvalidExperienceData.start_date),
+                    end_date: new Date(mockedvalidExperienceData.end_date)
+                }
+            );
+        });
+    });
+    describe("DELETE user experience by id endpoint test /api/users/experience/[experienceId]", () => {
+        it("should return 401 if the user is not authenticated", async () => {
+
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
+
+            const request = createRequest(`/api/users/experience/${mockedExperienceId}`, "PUT", mockedvalidExperienceData);
+
+            const response = await experienceDELETE(request, createContext("experienceId", mockedExperienceId));
+            const result = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(result.success).toBe(false);
+            expect(result.error).toBe("Unauthorized");
+            expect(result.message).toBe("Authentication is required");
+
+            expect(UserService.deleteUserExperience).not.toHaveBeenCalled();
+        });
+        it("should delete a user experience successfully", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteUserExperience as jest.Mock).mockResolvedValue(undefined);
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await experienceDELETE(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(responseBody.success).toBe(true);
+            expect(responseBody.message).toBe("Experience deleted successfully");
+
+            expect(UserService.deleteUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId
+            );
+        });
+
+        it("should return 400 if the experience ID is missing", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const request = createRequest(
+                "/api/users/experience/",
+                "DELETE",
+                undefined,
+            );
+
+            const response = await experienceDELETE(request, createContext("experienceId", ""));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Experience ID is required");
+
+            expect(UserService.deleteUserExperience).not.toHaveBeenCalled();
+        });
+
+        it("should return 404 if the user experience does not exist", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteUserExperience as jest.Mock).mockRejectedValue(
+                new NotFoundException("Experience not found")
+            );
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await experienceDELETE(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(404);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Experience not found");
+            expect(UserService.deleteUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId
+            );
+        });
+
+        it("should return 500 if deleting the experience fails", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteUserExperience as jest.Mock).mockRejectedValue(
+                new Error("Database error")
+            );
+
+            const request = createRequest(
+                `/api/users/experience/${mockedExperienceId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await experienceDELETE(request, createContext("experienceId", mockedExperienceId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe(
+                "Something went wrong while updating your profile."
+            );
+            expect(UserService.deleteUserExperience).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedExperienceId
+            );
+        });
+    });
+
+
+
+
+
+
+
+
+
+
     describe("Get user skills endpoins test /api/users/skills", () => {
         it("should return 401 if the user is not authenticated", async () => {
 
@@ -584,7 +881,7 @@ describe("testing user api endpoints", () => {
 
             const response = await skillsGET(request, {});
 
-            const result = await response.json(); 
+            const result = await response.json();
 
             expect(response.status).toBe(500);
             expect(result.success).toBe(false);
@@ -595,11 +892,11 @@ describe("testing user api endpoints", () => {
         });
     });
     describe("POST user skills endpoint test /api/users/skills", () => {
-       it("should return 401 if the user is not authenticated", async () => {
+        it("should return 401 if the user is not authenticated", async () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
-            const request = createRequest("/api/users/skills","POST",mockedvalidSkillData);
+            const request = createRequest("/api/users/skills", "POST", mockedvalidSkillData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -621,7 +918,7 @@ describe("testing user api endpoints", () => {
                 years_exp: "not-a-boolean"
             };
 
-            const request = createRequest("/api/users/skills","POST", invalidData);
+            const request = createRequest("/api/users/skills", "POST", invalidData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -688,7 +985,7 @@ describe("testing user api endpoints", () => {
                 new Error("Database error")
             );
 
-            const request = createRequest( "/api/users/skills", "POST", mockedvalidSkillData);
+            const request = createRequest("/api/users/skills", "POST", mockedvalidSkillData);
 
             const response = await skillsPOST(request, {});
             const result = await response.json();
@@ -702,6 +999,245 @@ describe("testing user api endpoints", () => {
             expect(UserService.addSkill).toHaveBeenCalledWith(
                 mockedUser.userId,
                 mockedvalidSkillData
+            );
+        });
+    });
+    describe("PUT user skill api enpdpoits /api/users/skills/[skillsId]", () => {
+        it("should return 401 if the user is not authenticated", async () => {
+
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
+
+            const request = createRequest(`/api/users/skills/${mockedSkillId}`, "PUT", mockedValidUpdateSkillData);
+
+            const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
+            const result = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(result.success).toBe(false);
+            expect(result.error).toBe("Unauthorized");
+            expect(result.message).toBe("Authentication is required");
+
+            expect(UserService.updateSkill).not.toHaveBeenCalled();
+        });
+        it("should update a skill successfully", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateSkill as jest.Mock).mockResolvedValue(mockedskill);
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "PUT",
+                mockedValidUpdateSkillData,
+            );
+
+            const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(responseBody.success).toBe(true);
+            expect(responseBody.skill).toEqual(JSON.parse(JSON.stringify(mockedskill)));
+            expect(responseBody.message).toBe("Skill updated successfully");
+
+            expect(UserService.updateSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId,
+                mockedValidUpdateSkillData
+            );
+        });
+        it("should return 400 if the skill ID is missing", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const request = createRequest(
+                "/api/users/skills/",
+                "PUT",
+                mockedValidUpdateSkillData
+            );
+
+            const response = await skillsPUT(request, createContext("skillId", ""));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Skill ID is required");
+
+            expect(UserService.updateSkill).not.toHaveBeenCalled();
+        });
+        it("should return 400 if the request body is invalid", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const invalidSkill = {
+                proficiency: ""
+            };
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "PUT",
+                invalidSkill,
+            );
+
+            const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBeDefined();
+
+            expect(UserService.updateSkill).not.toHaveBeenCalled();
+        });
+        it("should return 404 if the skill does not exist", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateSkill as jest.Mock).mockRejectedValue(
+                new NotFoundException("Skill not found")
+            );
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "PUT",
+                mockedValidUpdateSkillData,
+            );
+
+            const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(404);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Skill not found");
+
+            expect(UserService.updateSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId,
+                mockedValidUpdateSkillData
+            );
+        });
+        it("should return 500 if updating the skill fails", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateSkill as jest.Mock).mockRejectedValue(
+                new Error("Database error")
+            );
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "PUT",
+                mockedValidUpdateSkillData,
+            );
+
+            const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe(
+                "Something went wrong while updating your profile."
+            );
+            expect(UserService.updateSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId,
+                mockedValidUpdateSkillData
+            );
+        });
+    });
+    describe("DELETE skill by id endpoiun test /api/users/skills/[skillId]", () => {
+        it("should return 401 if the user is not authenticated", async () => {
+
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
+
+            const request = createRequest(`/api/users/skills/${mockedSkillId}`, "PUT", mockedValidUpdateSkillData);
+
+            const response = await skillsDELETE(request, createContext("skillId", mockedSkillId));
+            const result = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(result.success).toBe(false);
+            expect(result.error).toBe("Unauthorized");
+            expect(result.message).toBe("Authentication is required");
+
+            expect(UserService.deleteSkill).not.toHaveBeenCalled();
+        });
+        it("should delete a skill successfully", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteSkill as jest.Mock).mockResolvedValue(undefined);
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await skillsDELETE(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(responseBody.success).toBe(true);
+            expect(responseBody.message).toBe("Skill deleted successfully");
+
+            expect(UserService.deleteSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId
+            );
+        });
+
+        it("should return 400 if the skill ID is missing", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            const request = createRequest(
+                "/api/users/skills/",
+                "DELETE",
+                undefined,
+            );
+
+            const response = await skillsDELETE(request, createContext("skillId", ""));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Skill ID is required");
+
+            expect(UserService.deleteSkill).not.toHaveBeenCalled();
+        });
+
+        it("should return 404 if the skill does not exist", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteSkill as jest.Mock).mockRejectedValue(
+                new NotFoundException("Skill not found")
+            );
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await skillsDELETE(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(404);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("Skill not found");
+            expect(UserService.deleteSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId
+            );
+        });
+
+        it("should return 500 if deleting the skill fails", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.deleteSkill as jest.Mock).mockRejectedValue(
+                new Error("Database error")
+            );
+
+            const request = createRequest(
+                `/api/users/skills/${mockedSkillId}`,
+                "DELETE",
+                undefined,
+            );
+
+            const response = await skillsDELETE(request, createContext("skillId", mockedSkillId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe(
+                "Something went wrong while updating your profile."
+            );
+            expect(UserService.deleteSkill).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedSkillId
             );
         });
     });
