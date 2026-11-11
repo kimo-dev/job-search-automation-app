@@ -16,10 +16,10 @@ export const GET = IsAuthenticated(async (_req: NextRequest, user) => {
 
 
 
-export const POST = IsAuthenticated(async (_req: NextRequest, user) => {
+export const POST = IsAuthenticated(async (req: NextRequest, user) => {
 
     try {
-        const body = await _req.json();
+        const body = await req.json();
         const parsedData = createSkillValidationSchema.safeParse(body);
         if (!parsedData.success) {
             return NextResponse.json({
@@ -28,7 +28,7 @@ export const POST = IsAuthenticated(async (_req: NextRequest, user) => {
             }, { status: 400 });
         }
         const skill = await UserService.addSkill(user.userId, parsedData.data);
-        return NextResponse.json({ success: true, skill, message: "Skill added successfully" }, { status: 200 });
+        return NextResponse.json({ success: true, skill, message: "Skill added successfully" }, { status: 201 });
     } catch (error: any) {
         if (error instanceof AlreadyExistsException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 400 });

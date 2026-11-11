@@ -48,16 +48,25 @@ export class UserRepository {
         return skills;
     }
 
-    static async createSkill(userId: string, data: createSkillSchema): Promise<UserSkill> {
-        const skill = await prisma.userSkill.create({
+    static async createSkill(userId: string,data: createSkillSchema): Promise<UserSkill> {
+        try {
+            const skill = await prisma.userSkill.create({
             data: {
                 userId: userId,
                 skillName: data.skill_name,
                 proficiency: data.proficiency ?? "beginner",
                 yearsExp: data.years_exp ?? 0
+                }
+            });
+            return skill;
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+                throw new AlreadyExistsException(
+                    "This skill already exist"
+                );
             }
-        });
-        return skill;
+            throw error;
+        }
     }
 
     static async updateSkill(userId: string, skillId: string, data: updateSkillSchema) {
