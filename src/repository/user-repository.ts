@@ -1,7 +1,7 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { Prisma, UserProfile, UserSkill } from "@/generated/prisma/client";
+import { Prisma, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createSkillSchema, updateSkillSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
 
@@ -31,7 +31,7 @@ export class UserRepository {
             });
             return profile;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
                 throw new NotFoundException(
                     "Profile not found"
                 );
@@ -80,7 +80,7 @@ export class UserRepository {
             });
             return skill;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
                 throw new NotFoundException(
                     "Skill not found"
                 );
@@ -95,9 +95,72 @@ export class UserRepository {
                 where: { id: skillId, userId: userId }
             });
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
                 throw new NotFoundException(
                     "Skill not found"
+                );
+            }
+            throw error;
+        }
+    }
+
+    static async getAllUsersExperiences(userId: string): Promise<UserExperience[]> {
+        const experiences = await prisma.userExperience.findMany({
+            where: { userId }
+        });
+        return experiences;
+    }
+
+
+    static async createUserExperience(userId: string, data: createUserExperienceSchema): Promise<UserExperience> {
+        const userExperience = await prisma.userExperience.create({
+            data: {
+                userId: userId,
+                jobTitle: data.job_title,
+                companyName: data.company_name,
+                startDate: data.start_date,
+                endDate: data.end_date,
+                description: data.description,
+                isCurrent: data.is_current ?? false
+            }
+        });
+        return userExperience;
+    }
+
+    static async updateUserExperience(userId: string, experienceId: string, data: createUserExperienceSchema) {
+        try {
+            const experience = await prisma.userExperience.update({
+                where: { id: experienceId, userId: userId },
+                data: {
+                    jobTitle: data.job_title,
+                    companyName: data.company_name,
+                    startDate: data.start_date,
+                    endDate: data.end_date,
+                    description: data.description,
+                    isCurrent: data.is_current ?? false
+                }
+            });
+            return experience;
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+                throw new NotFoundException(
+                    "Experience not found"
+                );
+            }
+            throw error;
+        }
+    }
+
+
+    static async deleteUserExperience(userId: string, experienceId: string) {
+        try {
+            return await prisma.userExperience.delete({
+                where: { id: experienceId, userId: userId }
+            });
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+                throw new NotFoundException(
+                    "Experience not found"
                 );
             }
             throw error;
