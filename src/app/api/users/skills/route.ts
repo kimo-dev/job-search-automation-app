@@ -1,4 +1,4 @@
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
 import { createSkillValidationSchema } from "@/types/user";

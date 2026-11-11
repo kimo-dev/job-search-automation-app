@@ -1,8 +1,9 @@
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma as clientPrisma, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { UserRepository } from "@/repository/user-repository";
-import { createSkillSchema, createUserExperienceSchema, updateSkillSchema } from "@/types/user";
+import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, updateUserExperienceSchema } from "@/types/user";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -92,6 +93,14 @@ describe("User repository test", () => {
         description: "Passionate about building user-friendly web applications.",
         is_current: true
     };
+    const mockedUpdateExperienceSchema: updateUserExperienceSchema = {
+        job_title: "Senior Software Engineer",
+        company_name: "expert",
+        start_date: new Date("2026-10-19T21:08:32.275Z"),
+        end_date: new Date("2026-10-19T21:08:32.275Z"),
+        description: "Passionate about building user-friendly web applications.",
+        is_current: true
+    };
     const mockedExperienceId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
 
 
@@ -172,7 +181,34 @@ describe("User repository test", () => {
                 where: { userId: mockedUserId }
             });
         });
-        it("should create a new sill and return the created skill", async () => {
+        it("should throw AlreadyExistsException when skill already exists", async () => {
+            const mockedCreateSkillSchema: createSkillSchema = {
+                skill_name: "JavaScript",
+                proficiency: "expert",
+                years_exp: 5
+            };
+            const userIdMocked = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
+            const thrownPrismaError = new clientPrisma.PrismaClientKnownRequestError(
+                "This skill already exist",
+                {
+                    code: "P2002",
+                    clientVersion: "test"
+                }
+            );
+
+            (prisma.userSkill.create as jest.Mock).mockRejectedValue(thrownPrismaError);
+
+            await expect(UserRepository.createSkill(userIdMocked, mockedCreateSkillSchema)).rejects.toThrow(AlreadyExistsException);
+            expect(prisma.userSkill.create).toHaveBeenCalledWith({
+                data: {
+                    userId: userIdMocked,
+                    skillName: mockedCreateSkillSchema.skill_name,
+                    proficiency: mockedCreateSkillSchema.proficiency,
+                    yearsExp: mockedCreateSkillSchema.years_exp
+                }
+            })
+        });
+        it("should create a new skill and return the created skill", async () => {
             const mockedUserId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
             const mockedCreateSkillSchema: createSkillSchema = {
                 skill_name: "JavaScript",
@@ -257,6 +293,30 @@ describe("User repository test", () => {
                 where: { userId: mockedUserId }
             });
         });
+        it("on update it should throw AlreadyExistsException when skill already exists", async () => {
+            const thrownPrismaError = new clientPrisma.PrismaClientKnownRequestError(
+                "This user experience already exist",
+                {
+                    code: "P2002",
+                    clientVersion: "test"
+                }
+            );
+
+            (prisma.userExperience.create as jest.Mock).mockRejectedValue(thrownPrismaError);
+
+            await expect(UserRepository.createUserExperience(mockedUserId, mockedCreateExperienceSchema)).rejects.toThrow(AlreadyExistsException);
+            expect(prisma.userExperience.create).toHaveBeenCalledWith({
+                data: {
+                   userId: mockedUserId,
+                    jobTitle: mockedCreateExperienceSchema.job_title,
+                    companyName: mockedCreateExperienceSchema.company_name,
+                    startDate: mockedCreateExperienceSchema.start_date,
+                    endDate: mockedCreateExperienceSchema.end_date,
+                    description: mockedCreateExperienceSchema.description,
+                    isCurrent: mockedCreateExperienceSchema.is_current ?? false
+                }
+            })
+        });
         it("should create a new User experience and return the created experience", async () => {
 
             (prisma.userExperience.create as jest.Mock).mockResolvedValue(mockedReturnedUserExperience);
@@ -282,7 +342,7 @@ describe("User repository test", () => {
 
             (prisma.userExperience.update as jest.Mock).mockResolvedValue(mockedReturnedUserExperience);
 
-            const result = await UserRepository.updateUserExperience(mockedUserId, mockedExperienceId, mockedCreateExperienceSchema);
+            const result = await UserRepository.updateUserExperience(mockedUserId, mockedExperienceId, mockedUpdateExperienceSchema);
             expect(result).toEqual(mockedReturnedUserExperience);
             expect(prisma.userExperience.update).toHaveBeenCalledWith({
                 where: { id: mockedExperienceId, userId: mockedUserId },
@@ -298,7 +358,7 @@ describe("User repository test", () => {
         });
         it("should throw not found exception if prisma return P2025 error", async () => {
             (prisma.userExperience.update as jest.Mock).mockRejectedValue(prismaError);
-            await expect(UserRepository.updateUserExperience(mockedUserId, mockedExperienceId, mockedCreateExperienceSchema)).rejects.toThrow(NotFoundException);
+            await expect(UserRepository.updateUserExperience(mockedUserId, mockedExperienceId, mockedUpdateExperienceSchema)).rejects.toThrow(NotFoundException);
             expect(prisma.userExperience.update).toHaveBeenCalledWith({
                 where: { id: mockedExperienceId, userId: mockedUserId },
                 data: {

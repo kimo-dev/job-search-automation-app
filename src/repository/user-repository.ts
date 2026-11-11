@@ -1,7 +1,8 @@
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
 
@@ -113,21 +114,30 @@ export class UserRepository {
 
 
     static async createUserExperience(userId: string, data: createUserExperienceSchema): Promise<UserExperience> {
-        const userExperience = await prisma.userExperience.create({
-            data: {
-                userId: userId,
-                jobTitle: data.job_title,
-                companyName: data.company_name,
-                startDate: data.start_date,
-                endDate: data.end_date,
-                description: data.description,
-                isCurrent: data.is_current ?? false
-            }
-        });
+        try {
+            const userExperience = await prisma.userExperience.create({
+                data: {
+                    userId: userId,
+                    jobTitle: data.job_title,
+                    companyName: data.company_name,
+                    startDate: data.start_date,
+                    endDate: data.end_date,
+                    description: data.description,
+                    isCurrent: data.is_current ?? false
+                    }
+            });
         return userExperience;
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+                throw new AlreadyExistsException(
+                    "This user experience already exist"
+                );
+            }
+            throw error;
+        }
     }
 
-    static async updateUserExperience(userId: string, experienceId: string, data: createUserExperienceSchema) {
+    static async updateUserExperience(userId: string, experienceId: string, data: updateUserExperienceSchema) {
         try {
             const experience = await prisma.userExperience.update({
                 where: { id: experienceId, userId: userId },

@@ -1,4 +1,4 @@
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
 import { createUserExperienceValidationSchema } from "@/types/user";
@@ -28,7 +28,7 @@ export const POST = IsAuthenticated(async (_req: NextRequest, user) => {
             }, { status: 400 });
         }
         const experience = await UserService.addUserExperience(user.userId, parsedData.data);
-        return NextResponse.json({ success: true, experience, message: "Experience added successfully" }, { status: 200 });
+        return NextResponse.json({ success: true, experience, message: "Experience added successfully" }, { status: 201 });
     } catch (error: any) {
         if (error instanceof AlreadyExistsException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 400 });

@@ -1,7 +1,7 @@
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
-import { createUserExperienceValidationSchema } from "@/types/user";
+import {  updateUserExperienceValidationSchema } from "@/types/user";
 import { NextRequest, NextResponse } from "next/server";
 export const PUT = IsAuthenticated<RouteContext<"/api/users/experience/[experienceId]">>(async (req: NextRequest, user, context) => {
     try {
@@ -10,8 +10,7 @@ export const PUT = IsAuthenticated<RouteContext<"/api/users/experience/[experien
             return NextResponse.json({ success: false, error: "Experience ID is required" }, { status: 400 });
         }
         const body = await req.json();
-        const parsedData = createUserExperienceValidationSchema.safeParse(body);
-        console.log("parsedData", parsedData);
+        const parsedData = updateUserExperienceValidationSchema.safeParse(body);
         if (!parsedData.success) {
             return NextResponse.json({
                 success: false,

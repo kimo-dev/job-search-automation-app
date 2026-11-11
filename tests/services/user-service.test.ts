@@ -1,8 +1,8 @@
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { prisma } from "@/lib/prisma";
 import { UserRepository } from "@/repository/user-repository";
 import { UserService } from "@/services/user-service";
-import { createSkillSchema, createUserExperienceSchema, updateSkillSchema } from "@/types/user";
+import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, updateUserExperienceSchema } from "@/types/user";
 
 jest.mock("@/repository/user-repository", () => ({
     UserRepository: {
@@ -129,43 +129,17 @@ describe("user service test", () => {
                 updatedAt: new Date("2026-10-19T21:08:32.275Z"),
             };
 
-            (prisma.userSkill.findFirst as jest.Mock).mockResolvedValue(null);
+            
 
             (UserRepository.createSkill as jest.Mock).mockResolvedValue(mockedReturnSkill);
 
             const result = await UserService.addSkill(mockedUserId, createSkillMockedData);
 
             expect(UserRepository.createSkill).toHaveBeenCalledWith(mockedUserId, createSkillMockedData);
-            expect(prisma.userSkill.findFirst).toHaveBeenCalledWith({
-                where: {
-                    userId: mockedUserId,
-                    skillName: createSkillMockedData.skill_name
-                }
-            });
+            
             expect(result).toEqual(mockedReturnSkill);
         });
-        it("should throw AlreadyExistsException when skill already exists", async () => {
-            const mockedUserId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
-            const createSkillMockedData: createSkillSchema = {
-                skill_name: "JavaScript",
-                proficiency: "advanced",
-                years_exp: 5
-            };
-            const mockedExistingSkill = {
-                id: "42b4cef5-8349-4786-bccf-a4ac3ad8da2e",
-                userId: mockedUserId,
-                skillName: "JavaScript",
-                proficiency: "advanced",
-                yearsExp: 5,
-                createdAt: new Date("2026-10-19T21:08:32.275Z"),
-                updatedAt: new Date("2026-10-19T21:08:32.275Z"),
-            };
-
-            (prisma.userSkill.findFirst as jest.Mock).mockResolvedValue(mockedExistingSkill);
-
-            await expect(UserService.addSkill(mockedUserId, createSkillMockedData)).rejects.toThrow(AlreadyExistsException);
-            expect(UserRepository.createSkill).not.toHaveBeenCalled();
-        });
+        
         it("should call UserRepository.updateSkill and return the updated skill", async () => {
             const mockedUserId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
             const mockedSkillId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
@@ -209,8 +183,8 @@ describe("user service test", () => {
                 {
                     id: "42b4cef5-8349-4786-bccf-a4ac3ad8da2e",
                     userId: mockedUserId,
-                    title: "Software Engineer",
-                    company: "Tech Corp",
+                    jobTitle: "Software Engineer",
+                    companyName: "Tech Corp",
                     description: "Developed web applications using JavaScript and React.",
                     startDate: new Date("2020-01-01"),
                     endDate: new Date("2023-01-01"),
@@ -256,38 +230,11 @@ describe("user service test", () => {
             expect(UserRepository.createUserExperience).toHaveBeenCalledWith(mockedUserId, createExperienceMockedData);
             expect(result).toEqual(mockedCreatedExperience);
         });
-        it("should throw AlreadyExistsException when user experience already exists", async () => {
-            const mockedUserId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
-            const createExperienceMockedData : createUserExperienceSchema = {
-                job_title: "Software Engineer",
-                company_name: "Tech Corp",
-                description: "Developed web applications using JavaScript and React.",
-                start_date: new Date("2020-01-01"),
-                end_date: new Date("2023-01-01"),
-                is_current: false,
-            };
-            const mockedExistingExperience = {
-                id: "42b4cef5-8349-4786-bccf-a4ac3ad8da2e",
-                userId: mockedUserId,
-                jobTitle: "Software Engineer",
-                companyName: "Tech Corp",
-                description: "Developed web applications using JavaScript and React.",
-                startDate: new Date("2020-01-01"),
-                endDate: new Date("2023-01-01"),
-                isCurrent: false,
-                createdAt: new Date("2023-01-01T00:00:00.000Z"),
-                updatedAt: new Date("2023-01-01T00:00:00.000Z")
-            };
-
-            (prisma.userExperience.findFirst as jest.Mock).mockResolvedValue(mockedExistingExperience);
-
-            await expect(UserService.addUserExperience(mockedUserId, createExperienceMockedData)).rejects.toThrow(AlreadyExistsException);
-            expect(UserRepository.createUserExperience).not.toHaveBeenCalled();
-        });
+        
         it("should call UserRepository.updateUserExperience and return the updated user experience", async () => {
             const mockedUserId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
             const mockedExperienceId = "42b4cef5-8349-4786-bccf-a4ac3ad8da2e";
-            const updateExperienceMockedData : createUserExperienceSchema = {
+            const updateExperienceMockedData : updateUserExperienceSchema = {
                 job_title: "Senior Software Engineer",
                 company_name: "Tech Corp",
                 description: "Led development of web applications using JavaScript and React.",

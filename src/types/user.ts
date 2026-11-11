@@ -39,20 +39,69 @@ export const createUserExperienceValidationSchema = z.object({
         is_current: z.preprocess((value) => (value == null || value === undefined ? false : value), z.boolean()).default(false),
         start_date: z.iso.date({ error: "Invalid date format" }),
         end_date: z.iso.date({ error: "Invalid date format" }).optional(),
-}).refine((data) => {
-        if(!data.end_date) {
-                return true;
+}).superRefine((data, ctx) => {
+        if(data.is_current && data.end_date){
+                ctx.addIssue({
+                        code: "custom",
+                        path: ["end_date"],
+                        message: "End date cannot be provided for a current job",
+                });
         }
-        return new Date(data.start_date) <= new Date(data.end_date)
-}, {
-        message: "End date must be greater than or equal to start date",
-}).transform((data) => ({
+        if (
+        data.end_date &&
+        new Date(data.start_date) > new Date(data.end_date)
+        ) {
+                ctx.addIssue({
+                code: "custom",
+                path: ["end_date"],
+                message: "End date must be greater than or equal to start date",
+                });
+        }
+},).transform((data) => ({
         ...data,
         start_date: new Date(data.start_date),
         end_date: data.end_date ? new Date(data.end_date) : null,
+}));
+
+
+
+export const updateUserExperienceValidationSchema = z.object({
+        job_title: z.string().min(5, "title is too short must be more than 5 characters").max(50, "job title must be less than 50 characters").optional(),
+        company_name: z.string().min(1, "company name is required").optional(),
+        description: z.string().min(10, "description is too short must be more than 10 characters").max(200, "description must be less than 200 characters").optional(),
+        is_current: z.preprocess((value) => (value == null || value === undefined ? false : value), z.boolean()).default(false).optional(),
+        start_date: z.iso.date({ error: "Invalid date format" }).optional(),
+        end_date: z.iso.date({ error: "Invalid date format" }).optional(),
+}).superRefine((data, ctx) => {
+        if(data.is_current && data.end_date){
+                ctx.addIssue({
+                        code: "custom",
+                        path: ["end_date"],
+                        message: "End date cannot be provided for a current job",
+                });
+        }
+        if (
+        data.start_date && data.end_date &&
+        new Date(data.start_date) > new Date(data.end_date)
+        ) {
+                ctx.addIssue({
+                code: "custom",
+                path: ["end_date"],
+                message: "End date must be greater than or equal to start date",
+                });
+        }
+},).transform((data) => ({
+        ...data,
+    ...(data.start_date && {
+        start_date: new Date(data.start_date)
+    }),
+    ...(data.end_date && {
+        end_date: new Date(data.end_date)
+    }),
 }));
 
 export type UserProfileSchema = z.infer<typeof UserProfileVlidationSchema>;
 export type createSkillSchema = z.infer<typeof createSkillValidationSchema>;
 export type updateSkillSchema = z.infer<typeof updateSkillValidationSchema>;
 export type createUserExperienceSchema = z.infer<typeof createUserExperienceValidationSchema>;
+export type updateUserExperienceSchema = z.infer<typeof updateUserExperienceValidationSchema>;

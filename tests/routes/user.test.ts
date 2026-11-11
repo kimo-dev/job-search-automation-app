@@ -20,7 +20,7 @@ import config from "@/config";
 import { AuthenticationFailedException } from "@/exceptions/http/AuthenticationException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { updateSkillSchema, UserProfileSchema } from "@/types/user";
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistException";
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { RouterContext } from "next/dist/shared/lib/router-context.shared-runtime";
 import { JSXElementConstructor } from "react";
 
@@ -371,7 +371,7 @@ describe("testing user api endpoints", () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
             (UserService.getAllUsersExperiences as jest.Mock).mockResolvedValue([mockedExperience])
 
-            const request = createRequest("/api/user/experience", "GET");
+            const request = createRequest("/api/users/experience", "GET");
 
             const response = await experienceGET(request, {});
 
@@ -409,7 +409,7 @@ describe("testing user api endpoints", () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
             (UserService.getAllUsersExperiences as jest.Mock).mockRejectedValue(new Error("Database error"));
 
-            const request = createRequest("/api/user/experience", "GET");
+            const request = createRequest("/api/users/experience", "GET");
 
             const response = await experienceGET(request, {});
 
@@ -450,7 +450,7 @@ describe("testing user api endpoints", () => {
                 is_current: "not-a-boolean"
             };
 
-            const request = createRequest("/api/users/experiences", "POST", invalidData);
+            const request = createRequest("/api/users/experience", "POST", invalidData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -471,7 +471,7 @@ describe("testing user api endpoints", () => {
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(result.success).toBe(true);
             expect(result.message).toBe("Experience added successfully");
 
@@ -493,17 +493,17 @@ describe("testing user api endpoints", () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
 
             (UserService.addUserExperience as jest.Mock).mockRejectedValue(
-                new AlreadyExistsException()
+                new AlreadyExistsException("This skill already exist")
             );
 
-            const request = createRequest("/api/users/experiences", "POST", mockedvalidExperienceData);
+            const request = createRequest("/api/users/experience", "POST", mockedvalidExperienceData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
 
             expect(response.status).toBe(400);
             expect(result.success).toBe(false);
-            expect(result.error).toBe("This property already exists");
+            expect(result.error).toBe("This skill already exist");
 
             expect(UserService.addUserExperience).toHaveBeenCalledTimes(1);
             expect(UserService.addUserExperience).toHaveBeenCalledWith(
@@ -525,7 +525,7 @@ describe("testing user api endpoints", () => {
                 new Error("Database error")
             );
 
-            const request = createRequest("/api/users/experiences", "POST", mockedvalidExperienceData);
+            const request = createRequest("/api/users/experience", "POST", mockedvalidExperienceData);
 
             const response = await experiencePOST(request, {});
             const result = await response.json();
@@ -701,7 +701,7 @@ describe("testing user api endpoints", () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
-            const request = createRequest(`/api/users/experience/${mockedExperienceId}`, "PUT", mockedvalidExperienceData);
+            const request = createRequest(`/api/users/experience/${mockedExperienceId}`, "DELETE", mockedvalidExperienceData);
 
             const response = await experienceDELETE(request, createContext("experienceId", mockedExperienceId));
             const result = await response.json();
@@ -898,7 +898,7 @@ describe("testing user api endpoints", () => {
 
             const request = createRequest("/api/users/skills", "POST", mockedvalidSkillData);
 
-            const response = await experiencePOST(request, {});
+            const response = await skillsPOST(request, {});
             const result = await response.json();
 
             expect(response.status).toBe(401);
@@ -920,7 +920,7 @@ describe("testing user api endpoints", () => {
 
             const request = createRequest("/api/users/skills", "POST", invalidData);
 
-            const response = await experiencePOST(request, {});
+            const response = await skillsPOST(request, {});
             const result = await response.json();
 
             expect(response.status).toBe(400);
@@ -939,7 +939,7 @@ describe("testing user api endpoints", () => {
 
             const response = await skillsPOST(request, {});
             const result = await response.json();
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(result.success).toBe(true);
             expect(result.message).toBe("Skill added successfully");
 
@@ -957,7 +957,7 @@ describe("testing user api endpoints", () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
 
             (UserService.addSkill as jest.Mock).mockRejectedValue(
-                new AlreadyExistsException()
+                new AlreadyExistsException("This skill already exist")
             );
 
             const request = createRequest("/api/users/skills", "POST", mockedvalidSkillData);
@@ -967,7 +967,7 @@ describe("testing user api endpoints", () => {
 
             expect(response.status).toBe(400);
             expect(result.success).toBe(false);
-            expect(result.error).toBe("This property already exists");
+            expect(result.error).toBe("This skill already exist");
 
             expect(UserService.addSkill).toHaveBeenCalledTimes(1);
             expect(UserService.addSkill).toHaveBeenCalledWith(
@@ -1007,7 +1007,7 @@ describe("testing user api endpoints", () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
-            const request = createRequest(`/api/users/skills/${mockedSkillId}`, "PUT", mockedValidUpdateSkillData);
+            const request = createRequest(`/api/users/skills/${mockedSkillId}`, "DELETE", mockedValidUpdateSkillData);
 
             const response = await skillsPUT(request, createContext("skillId", mockedSkillId));
             const result = await response.json();
