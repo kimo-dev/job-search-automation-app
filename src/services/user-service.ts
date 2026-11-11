@@ -22,15 +22,6 @@ export class UserService {
     }
 
     static async addSkill(userId: string, data: createSkillSchema): Promise<UserSkill> {
-        const alreadyExist  = await prisma.userSkill.findFirst({
-            where: {
-                userId,
-                skillName: data.skill_name
-            }
-        });
-        if(alreadyExist) {
-            throw new AlreadyExistsException();
-        }
         const skill = await UserRepository.createSkill(userId, data);
         return skill;
     }

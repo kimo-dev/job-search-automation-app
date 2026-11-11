@@ -12,7 +12,6 @@ export const PUT = IsAuthenticated<RouteContext<"/api/users/skills/[skillId]">>(
         }
         const body = await req.json();
         const parsedData = updateSkillValidationSchema.safeParse(body);
-        console.log("parsedData", parsedData);
         if (!parsedData.success) {
             return NextResponse.json({
                 success: false,
