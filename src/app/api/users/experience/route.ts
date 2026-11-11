@@ -6,9 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = IsAuthenticated(async (_req: NextRequest, user) => {
     try {
-        const skills = await UserService.getAllUsersExperiences(user.userId);
+        const experiences = await UserService.getAllUsersExperiences(user.userId);
 
-        return NextResponse.json({ success: true, skills, message: "Experiences retrieved successfully" }, { status: 200 });
+        return NextResponse.json({ success: true, experiences, message: "Experiences retrieved successfully" }, { status: 200 });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to get the user Experiences!" }, { status: 500 });
     }
@@ -33,6 +33,6 @@ export const POST = IsAuthenticated(async (_req: NextRequest, user) => {
         if (error instanceof AlreadyExistsException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 400 });
         }
-        return NextResponse.json({ success: false, error: "Something went wrong. Failed to add the skill!" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong. Failed to add the user experience!" }, { status: 500 });
     }
 });
