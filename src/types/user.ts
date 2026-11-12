@@ -123,6 +123,24 @@ export const updateUserEducationValidationSchema = z.object({
         
 });
 
+export const createUserCertificationsValidationSchema = z.object({
+        cert_name: z.string().min(1, "certification name is required"),
+        issuer: z.string().min(1, "certiticaiton issuer is required"),
+        issued_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                message: "Date cannot be greater than today"
+        }).optional().transform((date) => date && new Date(date))
+        
+});
+
+export const updateUserCertificationsValidationSchema = z.object({
+        cert_name: z.string().min(1, "certification name is required").optional(),
+        issuer: z.string().min(1, "certiticaiton issuer is required").optional(),
+        issued_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                message: "Date cannot be greater than today"
+        }).optional().transform((date) => date && new Date(date))
+        
+});
+
 export type UserProfileSchema = z.infer<typeof UserProfileVlidationSchema>;
 export type createSkillSchema = z.infer<typeof createSkillValidationSchema>;
 export type updateSkillSchema = z.infer<typeof updateSkillValidationSchema>;
@@ -130,4 +148,7 @@ export type createUserExperienceSchema = z.infer<typeof createUserExperienceVali
 export type updateUserExperienceSchema = z.infer<typeof updateUserExperienceValidationSchema>;
 export type createUserEducationSchema = z.infer<typeof createUserEducationValidationSchema>;
 export type updateUserEducationSchema = z.infer<typeof updateUserEducationValidationSchema>;
+
+export type createUserCertificationsSchema = z.infer<typeof createUserCertificationsValidationSchema>;
+export type updateUserCertificationsSchema = z.infer<typeof updateUserCertificationsValidationSchema>;
 

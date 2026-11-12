@@ -1,8 +1,6 @@
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
-import { UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
-import { prisma } from "@/lib/prisma";
+import { UserCertification, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { UserRepository } from "@/repository/user-repository";
-import { createSkillSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
 export class UserService {
 
@@ -79,5 +77,24 @@ export class UserService {
 
     static async deleteUserEducation(userId: string, educationId: string): Promise<void> {
         await UserRepository.deleteUserEducation(userId, educationId);
+    }
+
+    static async getAllUserCertifications(userId: string): Promise<UserCertification[]> {
+        const userCertificaitons = await UserRepository.getAllUserCertifications(userId);
+        return userCertificaitons;
+    }
+
+     static async addUserCertification(userId: string, data: createUserCertificationsSchema): Promise<UserCertification> {
+        const certification = await UserRepository.createUserCertification(userId, data);
+        return certification;
+    }
+
+    static async updateUserCertification(userId: string, certificationId: string,  profile: updateUserCertificationsSchema): Promise<UserCertification> {
+        return await UserRepository.updateUserCertification(userId, certificationId,  profile);
+
+    }
+
+    static async deleteUserCertification(userId: string, certificationId: string): Promise<void> {
+        await UserRepository.deleteUserCertification(userId, certificationId);
     }
 }

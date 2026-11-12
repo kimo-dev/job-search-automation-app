@@ -125,4 +125,7 @@ model UserCertification {
 
   user        User @relation(fields: [userId], references: [id])
 
+  @@unique([userId, certName, issuer, issuedAt])
+
+
 }
