@@ -100,8 +100,34 @@ export const updateUserExperienceValidationSchema = z.object({
     }),
 }));
 
+
+export const createUserEducationValidationSchema = z.object({
+        degree: z.string().min(1, "Dgree is required"),
+        field_of_study: z.string().min(1, "Field of study is required"),
+        institution: z.string().min(1, "institution is required"),
+        description: z.string().min(10, "description is too short must be more than 10 characters").max(200, "description must be less than 200 characters").optional(),
+        grad_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                message: "Date cannot be greater than today"
+        }).optional().transform((date) => date && new Date(date))
+        
+});
+
+export const updateUserEducationValidationSchema = z.object({
+        degree: z.string().min(1, "Dgree is required").optional(),
+        field_of_study: z.string().min(1, "Field of study is required").optional(),
+        institution: z.string().min(1, "institution is required").optional(),
+        description: z.string().min(10, "description is too short must be more than 10 characters").max(200, "description must be less than 200 characters").optional(),
+        grad_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                message: "Date cannot be greater than today"
+        }).optional().transform((date) => date && new Date(date))
+        
+});
+
 export type UserProfileSchema = z.infer<typeof UserProfileVlidationSchema>;
 export type createSkillSchema = z.infer<typeof createSkillValidationSchema>;
 export type updateSkillSchema = z.infer<typeof updateSkillValidationSchema>;
 export type createUserExperienceSchema = z.infer<typeof createUserExperienceValidationSchema>;
 export type updateUserExperienceSchema = z.infer<typeof updateUserExperienceValidationSchema>;
+export type createUserEducationSchema = z.infer<typeof createUserEducationValidationSchema>;
+export type updateUserEducationSchema = z.infer<typeof updateUserEducationValidationSchema>;
+
