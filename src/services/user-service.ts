@@ -97,4 +97,9 @@ export class UserService {
     static async deleteUserCertification(userId: string, certificationId: string): Promise<void> {
         await UserRepository.deleteUserCertification(userId, certificationId);
     }
+
+    static async uploadAndParse(file: File) {
+
+
+    }
 }
