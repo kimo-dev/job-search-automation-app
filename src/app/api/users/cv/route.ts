@@ -25,12 +25,13 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
                 error: parsedData.error.issues.flat()
             }, { status: 400 });
         }
-        const result = UserService.uploadAndParse(file, user.userId);
+        const result = await UserService.uploadAndParse(file, user.userId);
         return NextResponse.json({ success: true, message: "Hello!"}, { status: 200 });
     } catch (error) {
         if( error instanceof AlreadyExistsException){
             return NextResponse.json({ success: false, error: error.message }, { status: 400 });
         }
+        console.log("error",error);
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to upload the file!" }, { status: 500 });
     }
 });

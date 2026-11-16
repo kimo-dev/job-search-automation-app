@@ -6,7 +6,7 @@ export class FileStorageService {
     private static readonly Storage_Root = path.join(process.cwd(), "storage");
 
     static async SaveToStorage(userId: string, folderName: string, type: string, file: File) {
-        const name = file.name;
+        const name = file.name.toLowerCase();
         const extension = path.extname(name).slice(1).toLocaleLowerCase();
         if(!extension){
             throw new Error("File extension is missing");
@@ -33,7 +33,8 @@ export class FileStorageService {
             fileKey,
             fileName: name,
             fileSize: file.size,
-            fileType: file.type
+            fileType: file.type,
+            buffer: bytes
         }
     }
 

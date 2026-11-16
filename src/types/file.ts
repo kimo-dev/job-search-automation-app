@@ -43,3 +43,72 @@ export const DocumentSchemaValidation = z.object({
     }
     
 });
+
+
+
+export const cvSchema = z.object({
+    skills: z.array(z.object({
+        skill_name: z.string(),
+        proficiency: z.preprocess((value) => {
+            if (typeof value === "string") {
+                    return value.trim().toLowerCase();
+            }
+            return value;
+        },
+        z.enum(["beginner", "intermediate", "advanced", "expert"]).optional()),
+        years_exp: z.number().min(0, "Years of experience must be >= 0").optional(),
+    })).describe('Technical and soft skills'),
+    experiences: z.array(
+        z.object({
+                job_title: z.string(),
+                company_name: z.string(),
+                description: z.string(),
+                is_current: z.preprocess((value) => (value == null || value === undefined ? false : value), z.boolean()).default(false),
+                start_date: z.iso.date({ error: "Invalid date format" }),
+                end_date: z.iso.date({ error: "Invalid date format" }).optional(),
+        }).superRefine((data, ctx) => {
+                if(data.is_current && data.end_date){
+                        ctx.addIssue({
+                                code: "custom",
+                                path: ["end_date"],
+                                message: "End date cannot be provided for a current job",
+                        });
+                }
+                if (
+                data.end_date &&
+                new Date(data.start_date) > new Date(data.end_date)
+                ) {
+                        ctx.addIssue({
+                        code: "custom",
+                        path: ["end_date"],
+                        message: "End date must be greater than or equal to start date",
+                        });
+                }
+        },).transform((data) => ({
+                ...data,
+                start_date: new Date(data.start_date),
+                end_date: data.end_date ? new Date(data.end_date) : null,
+        }))
+    ),
+    educations: z.array(
+        z.object({
+                degree: z.string(),
+                field_of_study: z.string(),
+                institution: z.string(),
+                description: z.string().optional(),
+                grad_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                        message: "Date cannot be greater than today"
+                }).optional().transform((date) => date && new Date(date))
+                
+        })
+    ),
+    certifications: z.array(
+        z.object({
+            cert_name: z.string(),
+            issuer: z.string(),
+            issued_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
+                    message: "Date cannot be greater than today"
+            }).optional().transform((date) => date && new Date(date))
+        })
+    )
+})

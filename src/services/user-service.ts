@@ -2,6 +2,7 @@ import { UserCertification, UserEducation, UserExperience, UserProfile, UserSkil
 import { UserRepository } from "@/repository/user-repository";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 import { FileStorageService } from "./FileStorage-service";
+import { CVParser } from "@/utils/cvParser";
 
 export class UserService {
 
@@ -103,6 +104,10 @@ export class UserService {
 
         await UserRepository.checkAlreadyUploaded(userId);
 
-        const result = FileStorageService.SaveToStorage(userId, "users", "cv", file);
+        const result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
+
+        const parsedData  = await CVParser.parseCvData(file, result.buffer);
+
+        console.log("result", parsedData);
     }
 }
