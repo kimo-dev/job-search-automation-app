@@ -1,3 +1,4 @@
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
 import { DocumentSchemaValidation } from "@/types/file";
@@ -24,9 +25,12 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
                 error: parsedData.error.issues.flat()
             }, { status: 400 });
         }
-        const a  = UserService.uploadAndParse(file);
-        return NextResponse.json({ message: "Hello!"});
+        const result = UserService.uploadAndParse(file, user.userId);
+        return NextResponse.json({ success: true, message: "Hello!"}, { status: 200 });
     } catch (error) {
+        if( error instanceof AlreadyExistsException){
+            return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to upload the file!" }, { status: 500 });
     }
 });

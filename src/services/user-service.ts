@@ -1,6 +1,7 @@
 import { UserCertification, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { UserRepository } from "@/repository/user-repository";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
+import { FileStorageService } from "./FileStorage-service";
 
 export class UserService {
 
@@ -98,8 +99,10 @@ export class UserService {
         await UserRepository.deleteUserCertification(userId, certificationId);
     }
 
-    static async uploadAndParse(file: File) {
+    static async uploadAndParse(file: File, userId: string) {
 
+        await UserRepository.checkAlreadyUploaded(userId);
 
+        const result = FileStorageService.SaveToStorage(userId, "users", "cv", file);
     }
 }

@@ -12,7 +12,7 @@ export class FileStorageService {
             throw new Error("File extension is missing");
         }
 
-        const key = `${randomUUID}.${extension}`;
+        const key = `${randomUUID()}.${extension}`;
 
         const fileKey = path.posix.join(
             folderName,
@@ -20,11 +20,9 @@ export class FileStorageService {
             userId,
             key
         );
-        console.log("filekey", fileKey);
 
         
         const filePath = this.ResolveStoragePath(fileKey);
-        console.log("path.dirname(filePath)", path.dirname(filePath));
         await fs.mkdir(path.dirname(filePath), { recursive: true});
 
         const bytes = Buffer.from(await file.arrayBuffer());
@@ -35,7 +33,7 @@ export class FileStorageService {
             fileKey,
             fileName: name,
             fileSize: file.size,
-            fileTtype: file.type
+            fileType: file.type
         }
     }
 

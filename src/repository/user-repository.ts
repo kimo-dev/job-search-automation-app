@@ -1,6 +1,6 @@
 import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { Prisma, UserCertification, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
+import { Prisma, UserCertification, UserCV, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
@@ -309,5 +309,16 @@ export class UserRepository {
             }
             throw error;
         }
+    }
+
+    static async checkAlreadyUploaded(userId: string): Promise<UserCV | null> {
+            const userCV = await prisma.userCV.findFirst({
+                where: { userId }
+            });
+            if(userCV){
+                throw new AlreadyExistsException("You already uploaded a cv");
+            }
+            return null;
+        
     }
 }

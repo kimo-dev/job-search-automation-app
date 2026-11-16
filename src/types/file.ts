@@ -1,16 +1,17 @@
+import path from "path";
 import z from "zod";
 
-const AcceptedTypes = ["application/pdf", "application/docx"];
+const AcceptedTypes = ["pdf", "doc"];
 const MX_File_Sise = 10 * 1024 * 1024;
 const isFile = (value: unknown): value is File =>
   typeof File !== "undefined" && value instanceof File;
 
-export const SingleFileValidation = z.instanceof(File)
-            .refine((file) => AcceptedTypes.includes(file.type), { message: "Invalid document file type" })
-            .refine((file) => file.size <= MX_File_Sise, {
-                message: "File size should not excceed 10MB"
+// export const SingleFileValidation = z.instanceof(File)
+//             .refine((file) => AcceptedTypes.includes(file.type), { message: "Invalid document file type" })
+//             .refine((file) => file.size <= MX_File_Sise, {
+//                 message: "File size should not excceed 10MB"
             
-});
+// });
 
 export const DocumentSchemaValidation = z.object({
     cv_file: z.custom<File>(isFile, "A file is required"),
@@ -31,4 +32,14 @@ export const DocumentSchemaValidation = z.object({
         });
         return
     }
+    const extension = path.extname(cv_file.name).slice(1).toLocaleLowerCase();
+    if(!AcceptedTypes.includes(extension)){
+        ctx.addIssue({
+            code: "custom",
+            path: ["cv_file"],
+            message: "Only PDF and DOC file are accepted"
+        });
+        return
+    }
+    
 });
