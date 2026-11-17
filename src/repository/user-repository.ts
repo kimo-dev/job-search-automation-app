@@ -2,6 +2,8 @@ import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma, UserCertification, UserCV, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ParsedCvData } from "@/mappers/cv-mapper";
+import { ReturnedSaveToStorageType } from "@/types/file";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
@@ -320,5 +322,49 @@ export class UserRepository {
             }
             return null;
         
+    }
+
+    static async saveExtractedData(parsedData: ParsedCvData, fileInfo: ReturnedSaveToStorageType, userId: string){
+        await prisma.$transaction([
+            prisma.userCV.create({
+                data: {
+                    userId: userId,
+                    fileUrl: fileInfo.fileKey,
+                    fileName: fileInfo.fileName,
+                    fileSize: fileInfo.fileSize,
+                }
+            }),
+            prisma.userSkill.createMany({
+                data: parsedData.skills.map((row) => ({ 
+                    userId: userId,
+                    skillName: row.skill_name,
+                    proficiency: row.profiency ?? "beginner",
+                    yearsExp: row.years_exp ?? 0
+                 })),
+            }),
+            prisma.userExperience.createMany({
+                data: parsedData.experiences.map((row) => ({ 
+                    userId: userId,
+                    jobTitle: row.job_title ?? "Not Specified",
+                    companyName: row.company_name ?? "Not Specified",
+                    startDate: row.start_date,
+                    endDate: row.end_date,
+                    isCurrent: row.is_current ?? false,
+                    description: row.description ?? ""
+                 }))
+            }),
+            prisma.userEducation.createMany({
+                data: parsedData.educations.map((row) => ({
+                    userId: userId,
+                    degree: row.degree ?? "",
+                    fieldOfStudy: row.field_of_study ?? "",
+                    institution: row.institution ?? "",
+                    description: row.description ?? "",
+                    gradDate: row.grad_date,
+
+                }))
+            })
+            
+        ]);
     }
 }

@@ -3,6 +3,7 @@ import { UserRepository } from "@/repository/user-repository";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 import { FileStorageService } from "./FileStorage-service";
 import { CVParser } from "@/utils/cvParser";
+import { MapCvSectionsMapper } from "@/mappers/cv-mapper";
 
 export class UserService {
 
@@ -102,12 +103,15 @@ export class UserService {
 
     static async uploadAndParse(file: File, userId: string) {
 
-        await UserRepository.checkAlreadyUploaded(userId);
-
+        const a = await UserRepository.checkAlreadyUploaded(userId);
         const result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
 
-        const parsedData  = await CVParser.parseCvData(file, result.buffer);
+        const rawData  = await CVParser.parseCvData(file, result.buffer);
 
-        console.log("result", parsedData);
+        const extractedData = await CVParser.parseCvSections(rawData);
+        const parsedData = new MapCvSectionsMapper().map(extractedData);
+
+        UserRepository.saveExtractedData(parsedData, result, userId);
+
     }
 }

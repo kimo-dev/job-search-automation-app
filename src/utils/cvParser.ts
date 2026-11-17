@@ -3,7 +3,7 @@ import "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 import mammoth from 'mammoth';
 import WordExtractor from 'word-extractor';
-import { CvSections, headings, knownSkills } from "@/types/file";
+import { CvSections, Section, sectionHeadingPatterns } from "@/types/file";
 
 
 export class CVParser {
@@ -33,69 +33,74 @@ export class CVParser {
                 break;
             default:
                 throw new Error("Unsupported file type");
-                break;
         }
         if (!rawText.trim()) {
             throw new Error("Could not extract text from CV");
         }
-        // const result = await generateText({
-        //     model: openai("gpt-4o-mini"),
-        //     output: Output.object({
-        //         schema: cvSchema
-        //     }),
-        //     prompt: `Extract the candidate's skills, work experiences, education, and certifications from the following CV text:\n\n${rawText}`,
-        // });
+
         return rawText;
     }
 
-    static async extractData(rawText: string) {
-        const result: CvSections = {
-            skills: [],
-            experiences: [],
-            educations: [],
-            certifications: []
-        }
+static removeBulletPrefix(line: string): string {
+  return line.replace(/^\s*[•*▪◦‣-]\s*/, "").trim();
+}
 
-        let currentSection: keyof CvSections | null = null;
+static findSectionHeading(
+  line: string,
+): { section: Section | null; inlineContent: string } | null {
+  const cleanedLine = CVParser.removeBulletPrefix(line);
 
-        for (const rawline of rawText.split(/\r?\n/)) {
-            const line = rawline.trim();
-            if (!line) continue;
+  for (const { section, pattern } of sectionHeadingPatterns) {
+    const match = cleanedLine.match(pattern);
 
-            const matchedHeading = (
-                Object.entries(headings) as [keyof CvSections, RegExp][]
-            ).find(([, pattern]) => pattern.test(line));
+    if (match) {
+      return {
+        section,
+        inlineContent: match[1]?.trim() ?? "",
+      };
+    }
+  }
 
-            if (matchedHeading) {
-                currentSection = matchedHeading[0];
-                continue;
-            }
+  return null;
+}
 
-            const isAnotherHeading = Object.values(headings).some((pattern) =>
-                pattern.test(line),
-            );
-            if (isAnotherHeading) {
-                currentSection = null;
-                continue;
-            }
+static isPdfPageFooter(line: string): boolean {
+  return /^--\s*\d+\s+of\s+\d+\s*--$/i.test(line);
+}
 
-            if (currentSection) {
-                result[currentSection].push(line);
-            }
+static parseCvSections(rawText: string): CvSections {
+    const sections: CvSections = {
+    skills: [],
+    experiences: [],
+    educations: [],
+    certifications: [],
+  };
 
-        }
+  let currentSection: Section | null = null;
 
-        const allText = rawText.toLowerCase();
-        result.skills = knownSkills.filter((skill) =>
-            new RegExp(
-                `(^|[^a-z0-9+#.])${CVParser.escapeRegExp(skill.toLowerCase())}([^a-z0-9+#.]|$)`,
-            ).test(allText),
-        );
+  for (const rawLine of rawText.replace(/\r/g, "").split("\n")) {
+    const line = rawLine.trim();
+    if (!line || CVParser.isPdfPageFooter(line)) continue;
 
-        return result;
+    const heading = CVParser.findSectionHeading(line);
+
+    if (heading) {
+      currentSection = heading.section;
+
+      // For example, "Certifications: CCNA Cisco Certificate".
+      if (currentSection && heading.inlineContent) {
+        sections[currentSection].push(heading.inlineContent);
+      }
+
+      continue;
     }
 
-    static escapeRegExp(value: string): string {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (currentSection) {
+      sections[currentSection].push(line);
     }
+  }
+
+  return sections;
+}
+
 }

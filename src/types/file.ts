@@ -113,7 +113,13 @@ export const cvSchema = z.object({
     )
 });
 
-
+export type ReturnedSaveToStorageType = {
+    fileKey: string,
+    fileName: string,
+    fileSize: number,
+    fileType: string,
+    buffer: Buffer<ArrayBuffer> 
+}
 
 export type CvSections = {
     skills: string[],
@@ -123,10 +129,14 @@ export type CvSections = {
 }
 
 export const headings: Record<keyof CvSections, RegExp> = {
-    skills: /^(technical\s+)?skills|^(core\s+)?competencies$/i,
-    experiences: /^(work\s+)?experience|employment\s+history|career\s+history$/i,
-    educations: /^education|academic\s+background$/i,
-    certifications: /^certifications?|licenses?$/i,
+  skills:
+    /(?:^|\s)(?:technical\s+skills|core\s+competencies|skills|competencies)(?:\s|$)/i,
+  experiences:
+    /(?:^|\s)(?:work\s+experience|professional\s+experience|employment\s+history|career\s+history|experience|work\s+history)(?:\s|$)/i,
+  educations:
+    /(?:^|\s)(?:education|academic\s+background|educational\s+background)(?:\s|$)/i,
+  certifications:
+    /(?:^|\s)(?:certifications?|licenses?)(?:\s|$)/i,
 };
 
 export const knownSkills = [
@@ -140,4 +150,40 @@ export const knownSkills = [
   "PostgreSQL",
   "AWS",
   "Docker",
+];
+
+export type Section = keyof CvSections;
+
+export const sectionHeadingPatterns: Array<{
+  section: Section | null;
+  pattern: RegExp;
+}> = [
+  {
+    section: "skills",
+    pattern:
+      /^(?:technical\s+skills|core\s+skills|key\s+skills|skills|competencies)\s*:?\s*(.*)$/i,
+  },
+  {
+    section: "experiences",
+    pattern:
+      /^(?:professional\s+experience|work\s+experience|experience|experiences|employment\s+history|career\s+history|work\s+history)\s*:?\s*(.*)$/i,
+  },
+  {
+    section: "educations",
+    pattern:
+      /^(?:education|academic\s+background|educational\s+background|academic\s+qualifications)\s*:?\s*(.*)$/i,
+  },
+  {
+    section: "certifications",
+    pattern:
+      /^(?:certifications?|licenses(?:\s+and\s+certifications)?)\s*:?\s*(.*)$/i,
+  },
+
+  // These aren't stored in CvSections, but they must stop the previous
+  // section from swallowing their content.
+  {
+    section: null,
+    pattern:
+      /^(?:languages?|references?|interests?|hobbies|projects?|profile|professional\s+summary|summary)\s*:?\s*(.*)$/i,
+  },
 ];

@@ -1,11 +1,12 @@
 import { randomUUID } from "crypto";
 import path from "path";
 import fs from "fs/promises";
+import { ReturnedSaveToStorageType } from "@/types/file";
 
 export class FileStorageService {
     private static readonly Storage_Root = path.join(process.cwd(), "storage");
 
-    static async SaveToStorage(userId: string, folderName: string, type: string, file: File) {
+    static async SaveToStorage(userId: string, folderName: string, type: string, file: File) : Promise<ReturnedSaveToStorageType> {
         const name = file.name.toLowerCase();
         const extension = path.extname(name).slice(1).toLocaleLowerCase();
         if(!extension){
