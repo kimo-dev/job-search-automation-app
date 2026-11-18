@@ -1,10 +1,24 @@
 import { AppException } from "@/exceptions/AppExceptions";
-import { CVAlreadyUploadedException } from "@/exceptions/cvAlreadyExistException";
 import { FileCleanupException } from "@/exceptions/fileCleanupException";
+import { NotFoundException } from "@/exceptions/notFoundException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
 import { DocumentSchemaValidation } from "@/types/file";
 import { NextRequest, NextResponse } from "next/server";
+
+
+export const GET = IsAuthenticated(async (_req: NextRequest, user) => {
+    try {
+        const userCV = await UserService.getUserCV(user.userId);
+
+        return NextResponse.json({ success: true, userCV, message: "CV metadata retrieved" }, { status: 200 });
+    } catch (error: any) {
+        if(error instanceof NotFoundException){
+            return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        return NextResponse.json({ success: false, error: "Something went wrong. Failed to get the CV metadata retrieved!" }, { status: 500 });
+    }
+});
 
 export const POST = IsAuthenticated(async (req: NextRequest, user) => {
     try {

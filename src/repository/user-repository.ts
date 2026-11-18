@@ -369,4 +369,46 @@ export class UserRepository {
         ]);
         return savedCV;
     }
+
+    static async getUserCV(userId: string): Promise<UserCV> {
+        const userCV = await prisma.userCV.findUnique({
+            where: { userId }
+        });
+        if (!userCV) {
+            throw new NotFoundException(`Your cv was not found. Try uploading One`)
+        }
+        return userCV;
+
+    }
+
+    static async deleteUserMetada(userId: string, cvId: string) : Promise<void> {
+        try {
+            return await prisma.$transaction(async (tx) => {
+                await tx.userCV.delete({
+                    where: { id: cvId ,userId: userId }
+                });
+                await tx.userSkill.deleteMany({
+                    where: { userId }
+                });
+                await tx.userExperience.deleteMany({
+                    where: {userId}
+                });
+                await tx.userEducation.deleteMany({
+                    where: { userId }
+                });
+                await tx.userCertification.deleteMany({
+                    where: { userId }
+                });
+            });
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+                throw new NotFoundException(
+                    "CV not found "
+                );
+            }
+            throw error;
+        }
+    }
+
+    
 }
