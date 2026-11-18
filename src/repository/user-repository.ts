@@ -364,6 +364,14 @@ export class UserRepository {
                     gradDate: row.grad_date,
 
                 }))
+            }),
+            prisma.userCertification.createMany({
+                data: parsedData.certifications.map((row) => ({
+                    userId: userId,
+                    certName: row.cert_name,
+                    issuer: row.issuer ?? "",
+                    issuedAt: row.issued_date
+                }))
             })
             
         ]);

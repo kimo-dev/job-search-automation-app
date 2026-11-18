@@ -44,6 +44,10 @@ export class FileStorageService {
         const filePath = this.ResolveStoragePath(filekey);
         try {
             await fs.unlink(filePath);
+
+            const parentFolder = path.dirname(filePath);
+
+            await fs.rmdir(parentFolder);
         }catch(error){
             if (
                 error instanceof Error &&
