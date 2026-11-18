@@ -4,6 +4,7 @@ import { PDFParse } from "pdf-parse";
 import mammoth from 'mammoth';
 import WordExtractor from 'word-extractor';
 import { CvSections, Section, sectionHeadingPatterns } from "@/types/file";
+import { CVParsingException } from "@/exceptions/cvParsingException";
 
 
 export class CVParser {
@@ -32,10 +33,10 @@ export class CVParser {
                 rawText = extracted.getBody();
                 break;
             default:
-                throw new Error("Unsupported file type");
+                throw new CVParsingException("Unsupported file type", "Unsupported_File_Type", 415);
         }
         if (!rawText.trim()) {
-            throw new Error("Could not extract text from CV");
+            throw new CVParsingException("Could not extract text from CV", "Could_Not_Extract_Text_From_CV", 422);
         }
 
         return rawText;

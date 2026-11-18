@@ -1,5 +1,6 @@
-import { knownSkills, type CvSections } from "@/types/file";
+import { knownSkills, ReturnedParsedData, type CvSections } from "@/types/file";
 import { IMapper } from "./IMapper";
+import { UserCV } from "@/generated/prisma/client";
 
 type SkillRecord = {
   skill_name: string;
@@ -42,6 +43,11 @@ type ParsedDateRange = {
   is_current: boolean;
 };
 
+export interface UserCVResponseSource  {
+  savedCV: UserCV,
+  parsedData: ParsedCvData
+}
+
 export class MapCvSectionsMapper implements IMapper<CvSections, ParsedCvData> {
   map(data: CvSections): ParsedCvData {
 
@@ -54,6 +60,18 @@ export class MapCvSectionsMapper implements IMapper<CvSections, ParsedCvData> {
       certifications: parseCertifications(data.certifications),
     };
   }
+}
+
+export class MapUserCVResponse implements IMapper<UserCVResponseSource, ReturnedParsedData> {
+  map(data: UserCVResponseSource): ReturnedParsedData {
+    return {
+            ...data.parsedData,
+            id: data.savedCV.id,
+            file_url: data.savedCV.fileUrl,
+            createdAt: data.savedCV.createdAt
+        };
+  }
+
 }
 
 function escapeRegExp(value: string): string {

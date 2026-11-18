@@ -1,4 +1,6 @@
-import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
+import { AppException } from "@/exceptions/AppExceptions";
+import { CVAlreadyUploadedException } from "@/exceptions/cvAlreadyExistException";
+import { FileCleanupException } from "@/exceptions/fileCleanupException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
 import { DocumentSchemaValidation } from "@/types/file";
@@ -26,12 +28,14 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
             }, { status: 400 });
         }
         const result = await UserService.uploadAndParse(file, user.userId);
-        return NextResponse.json({ success: true, message: "Hello!"}, { status: 200 });
+        return NextResponse.json({ success: true, result, message: "CV metadata retrieved"}, { status: 200 });
     } catch (error) {
-        if( error instanceof AlreadyExistsException){
-            return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        if( error instanceof FileCleanupException){
+            return NextResponse.json({ success: false, error: "CV proccessing failed and the uploaded file could not be deleted" }, { status: error.statusCode });
         }
-        console.log("error",error);
+        if(error instanceof AppException){
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode});
+        }
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to upload the file!" }, { status: 500 });
     }
 });

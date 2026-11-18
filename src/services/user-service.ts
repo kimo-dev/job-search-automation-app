@@ -3,7 +3,9 @@ import { UserRepository } from "@/repository/user-repository";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 import { FileStorageService } from "./FileStorage-service";
 import { CVParser } from "@/utils/cvParser";
-import { MapCvSectionsMapper } from "@/mappers/cv-mapper";
+import { MapCvSectionsMapper, MapUserCVResponse } from "@/mappers/cv-mapper";
+import { ReturnedParsedData, ReturnedSaveToStorageType } from "@/types/file";
+import { FileCleanupException } from "@/exceptions/fileCleanupException";
 
 export class UserService {
 
@@ -101,17 +103,35 @@ export class UserService {
         await UserRepository.deleteUserCertification(userId, certificationId);
     }
 
-    static async uploadAndParse(file: File, userId: string) {
+    static async uploadAndParse(file: File, userId: string) : Promise<ReturnedParsedData> {
 
-        const a = await UserRepository.checkAlreadyUploaded(userId);
-        const result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
+        let result : ReturnedSaveToStorageType | null = null;
+       try {
+            const a = await UserRepository.checkAlreadyUploaded(userId);
+            result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
 
-        const rawData  = await CVParser.parseCvData(file, result.buffer);
+            const rawData  = await CVParser.parseCvData(file, result.buffer);
 
-        const extractedData = await CVParser.parseCvSections(rawData);
-        const parsedData = new MapCvSectionsMapper().map(extractedData);
+            const extractedData = await CVParser.parseCvSections(rawData);
+            const parsedData = new MapCvSectionsMapper().map(extractedData);
 
-        UserRepository.saveExtractedData(parsedData, result, userId);
+            const savedCV = await UserRepository.saveExtractedData(parsedData, result, userId);
+
+            return new MapUserCVResponse().map({
+                savedCV, parsedData
+            });
+
+       } catch (error) {
+            try {
+                if(result !== null){
+                    await FileStorageService.DeleteFromStorage(result.fileKey)
+                }
+            } catch(cleanupError){
+                throw new FileCleanupException(error, cleanupError);
+            }
+            throw error;
+       }
+
 
     }
 }

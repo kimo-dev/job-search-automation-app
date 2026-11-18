@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import path from "path";
 import fs from "fs/promises";
 import { ReturnedSaveToStorageType } from "@/types/file";
+import { FileStorageException } from "@/exceptions/FileStorageException";
 
 export class FileStorageService {
     private static readonly Storage_Root = path.join(process.cwd(), "storage");
@@ -10,7 +11,7 @@ export class FileStorageService {
         const name = file.name.toLowerCase();
         const extension = path.extname(name).slice(1).toLocaleLowerCase();
         if(!extension){
-            throw new Error("File extension is missing");
+            throw new FileStorageException("File extension is missing", "File_Extension_Missing", 400);
         }
 
         const key = `${randomUUID()}.${extension}`;
@@ -39,6 +40,22 @@ export class FileStorageService {
         }
     }
 
+    static async DeleteFromStorage(filekey: string) {
+        const filePath = this.ResolveStoragePath(filekey);
+        try {
+            await fs.unlink(filePath);
+        }catch(error){
+            if (
+                error instanceof Error &&
+                "code" in error &&
+                error.code === "ENOENT"
+            ) {
+                throw new FileStorageException("File not found to delete", "File_Not_Found_To_Delete", 404);
+            }
+            throw error;
+        }
+    }
+
 
     static async GetFromStorage(fileKey: string): Promise<Buffer> {
         const filePath = this.ResolveStoragePath(fileKey);
@@ -51,7 +68,7 @@ export class FileStorageService {
                 "code" in error &&
                 error.code === "ENOENT"
             ) {
-                throw new Error("File not found");
+                throw new FileStorageException("File not found","File_Not_Found", 404);
             }
 
             throw error;
@@ -63,7 +80,7 @@ export class FileStorageService {
         const filePath = path.resolve(this.Storage_Root, fileKey);
 
         if (!filePath.startsWith(this.Storage_Root + path.sep)) {
-            throw new Error("Invalid storage path");
+            throw new FileStorageException("Invalid storage path", "Invalid_Storage_Path", 400);
         }
 
         return filePath;

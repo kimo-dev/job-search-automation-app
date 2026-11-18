@@ -1,5 +1,7 @@
+import { ParsedCvData } from "@/mappers/cv-mapper";
 import path from "path";
-import z from "zod";
+import z, { string } from "zod";
+import { GlobalFields } from "./global";
 
 const AcceptedTypes = ["pdf", "doc"];
 const MX_File_Sise = 10 * 1024 * 1024;
@@ -187,3 +189,6 @@ export const sectionHeadingPatterns: Array<{
       /^(?:languages?|references?|interests?|hobbies|projects?|profile|professional\s+summary|summary)\s*:?\s*(.*)$/i,
   },
 ];
+
+
+export type ReturnedParsedData  = ParsedCvData & GlobalFields & { file_url : string};

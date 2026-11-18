@@ -1,4 +1,5 @@
 import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
+import { CVAlreadyUploadedException } from "@/exceptions/cvAlreadyExistException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { Prisma, UserCertification, UserCV, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -318,14 +319,14 @@ export class UserRepository {
                 where: { userId }
             });
             if(userCV){
-                throw new AlreadyExistsException("You already uploaded a cv");
+                throw new CVAlreadyUploadedException("You already uploaded a cv");
             }
             return null;
         
     }
 
-    static async saveExtractedData(parsedData: ParsedCvData, fileInfo: ReturnedSaveToStorageType, userId: string){
-        await prisma.$transaction([
+    static async saveExtractedData(parsedData: ParsedCvData, fileInfo: ReturnedSaveToStorageType, userId: string) : Promise<UserCV>{
+        const [savedCV] = await prisma.$transaction([
             prisma.userCV.create({
                 data: {
                     userId: userId,
@@ -366,5 +367,6 @@ export class UserRepository {
             })
             
         ]);
+        return savedCV;
     }
 }
