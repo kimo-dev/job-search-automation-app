@@ -1,8 +1,8 @@
 import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
-import { UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
+import { UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { UserRepository } from "@/repository/user-repository";
-import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
 export class UserService {
 
@@ -63,4 +63,21 @@ export class UserService {
         await UserRepository.deleteUserExperience(userId, experienceId);
     }
 
+    static async getAllUserEducations(userId: string): Promise<UserEducation[]> {
+        const userEducations = await UserRepository.getAllUserEducations(userId);
+        return userEducations;
+    }
+
+    static async addUserEducation(userId: string, data: createUserEducationSchema): Promise<UserEducation> {
+        const education = await UserRepository.createUserEducation(userId, data);
+        return education;
+    }
+    static async updateUserEducation(userId: string, educationId: string,  profile: updateUserEducationSchema): Promise<UserEducation> {
+        return await UserRepository.updateUserEducation(userId, educationId,  profile);
+
+    }
+
+    static async deleteUserEducation(userId: string, educationId: string): Promise<void> {
+        await UserRepository.deleteUserEducation(userId, educationId);
+    }
 }

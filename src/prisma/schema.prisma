@@ -110,6 +110,8 @@ model UserEducation {
 
   user        User @relation(fields: [userId], references: [id])
 
+  @@unique([userId, degree, fieldOfStudy, institution, gradDate])
+
 }
 
 model UserCertification {
