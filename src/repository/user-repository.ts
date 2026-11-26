@@ -1,8 +1,8 @@
 import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
-import { Prisma, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
+import { Prisma, UserCertification, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createSkillSchema, createUserExperienceSchema, updateSkillSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
+import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
 
 export class UserRepository {
 
@@ -171,6 +171,156 @@ export class UserRepository {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
                 throw new NotFoundException(
                     "Experience not found"
+                );
+            }
+            throw error;
+        }
+    }
+
+    static async getAllUserEducations(userId: string): Promise<UserEducation[]> {
+        const userEducations = await prisma.userEducation.findMany({
+            where: { userId }
+        });
+        return userEducations;
+    }
+
+    static async createUserEducation(userId: string,data: createUserEducationSchema): Promise<UserEducation> {
+        try {
+            const education = await prisma.userEducation.create({
+            data: {
+                userId: userId,
+                degree: data.degree,
+                fieldOfStudy: data.field_of_study,
+                institution: data.institution,
+                description: data.description,
+                gradDate: data.grad_date
+                }
+            });
+            return education;
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+                throw new AlreadyExistsException(
+                    "This user education already exist"
+                );
+            }
+            throw error;
+        }
+    }
+
+
+    static async updateUserEducation(userId: string, educationId: string, data: updateUserEducationSchema) {
+        try {
+            const education = await prisma.userEducation.update({
+                where: { id: educationId, userId: userId },
+                data: {
+                    degree: data.degree,
+                    fieldOfStudy: data.field_of_study,
+                    institution: data.institution,
+                    description: data.description,
+                    gradDate: data.grad_date
+                }
+            });
+            return education;
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                switch (error.code) {
+                    case "P2002":
+                        throw new AlreadyExistsException(
+                            "An education record with these details already exists."
+                        );
+
+                    case "P2025":
+                        throw new NotFoundException(
+                            "Education record not found."
+                        );
+                }
+            }
+            throw error;
+        }
+    }
+
+    static async deleteUserEducation(userId: string, educationId: string) {
+        try {
+            return await prisma.userEducation.delete({
+                where: { id: educationId, userId: userId }
+            });
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+                throw new NotFoundException(
+                    "User education not found"
+                );
+            }
+            throw error;
+        }
+    }
+
+    static async getAllUserCertifications(userId: string): Promise<UserCertification[]> {
+        const userCertificaitons = await prisma.userCertification.findMany({
+            where: { userId }
+        });
+        return userCertificaitons;
+    }
+
+
+    static async createUserCertification(userId: string,data: createUserCertificationsSchema): Promise<UserCertification> {
+        try {
+            const certification = await prisma.userCertification.create({
+            data: {
+                userId: userId,
+                certName: data.cert_name,
+                issuer: data.issuer,
+                issuedAt: data.issued_date
+                }
+            });
+            return certification;
+        } catch (error) {
+            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+                throw new AlreadyExistsException(
+                    "This user certification already exist"
+                );
+            }
+            throw error;
+        }
+    }
+
+    static async updateUserCertification(userId: string, certificationId: string, data: updateUserCertificationsSchema) {
+        try {
+            const certification = await prisma.userCertification.update({
+                where: { id: certificationId, userId: userId },
+                data: {
+                    certName: data.cert_name,
+                    issuer: data.issuer,
+                    issuedAt: data.issued_date,
+                }
+            });
+            return certification;
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                switch (error.code) {
+                    case "P2002":
+                        throw new AlreadyExistsException(
+                            "A certification record with these details already exists."
+                        );
+
+                    case "P2025":
+                        throw new NotFoundException(
+                            "Certification record not found."
+                        );
+                }
+            }
+            throw error;
+        }
+    }
+
+    static async deleteUserCertification(userId: string, certificationId: string) {
+        try {
+            return await prisma.userCertification.delete({
+                where: { id: certificationId, userId: userId }
+            });
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+                throw new NotFoundException(
+                    "User certification not found"
                 );
             }
             throw error;
