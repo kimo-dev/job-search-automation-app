@@ -222,10 +222,18 @@ export class UserRepository {
             });
             return education;
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-                throw new NotFoundException(
-                    "User education not found"
-                );
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                switch (error.code) {
+                    case "P2002":
+                        throw new AlreadyExistsException(
+                            "An education record with these details already exists."
+                        );
+
+                    case "P2025":
+                        throw new NotFoundException(
+                            "Education record not found."
+                        );
+                }
             }
             throw error;
         }
@@ -287,10 +295,18 @@ export class UserRepository {
             });
             return certification;
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-                throw new NotFoundException(
-                    "User certification not found"
-                );
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                switch (error.code) {
+                    case "P2002":
+                        throw new AlreadyExistsException(
+                            "A certification record with these details already exists."
+                        );
+
+                    case "P2025":
+                        throw new NotFoundException(
+                            "Certification record not found."
+                        );
+                }
             }
             throw error;
         }

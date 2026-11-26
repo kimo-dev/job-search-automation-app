@@ -53,7 +53,7 @@ describe("User repository - Education and certification test", () => {
         grad_date: new Date("2018-05-20 00:00:00"),
     }
     const mockedUserCertification : UserCertification = {
-        id: mockedUserEducationId,
+        id: mockedUserCertificationId,
         userId: mockedUserId,
         certName: "Certification1",
         issuer: "SE2",
@@ -113,7 +113,7 @@ describe("User repository - Education and certification test", () => {
             );
             (prisma.userEducation.create as jest.Mock).mockRejectedValue(PrismaError);
 
-            expect(UserRepository.createUserEducation(mockedUserId, mockedCreateUserEducationSchema)).rejects.toThrow(AlreadyExistsException)
+            await expect(UserRepository.createUserEducation(mockedUserId, mockedCreateUserEducationSchema)).rejects.toThrow(AlreadyExistsException)
             expect(prisma.userEducation.create).toHaveBeenCalledWith({
                 data: {
                     userId: mockedUserId,
@@ -142,9 +142,31 @@ describe("User repository - Education and certification test", () => {
             });
             expect(result).toEqual(mockedUserEducation);
         });
+        it("should throw an error if user update a current user education to match another one in db  ", async () => {
+            const prismaError = new clientPrisma.PrismaClientKnownRequestError(
+                "An education record with these details already exists.",
+                {
+                    code: "P2002",
+                    clientVersion: "test"
+                }
+            );
+            (prisma.userEducation.update as jest.Mock).mockRejectedValue(prismaError);
+            
+            await expect(UserRepository.updateUserEducation(mockedUserId, mockedUserEducationId, mockedUpdateUserEducationSchema)).rejects.toThrow(AlreadyExistsException);
+            expect(prisma.userEducation.update).toHaveBeenCalledWith({
+                where: { id: mockedUserEducationId, userId: mockedUserId  },
+                data: {
+                    degree: mockedUpdateUserEducationSchema.degree,
+                    fieldOfStudy: mockedUpdateUserEducationSchema.field_of_study,
+                    institution: mockedUpdateUserEducationSchema.institution,
+                    description: mockedUpdateUserEducationSchema.description,
+                    gradDate: mockedUpdateUserEducationSchema.grad_date
+                }
+            });
+        });
         it("should throw an error if the updated user education was not found", async () => {
             const prismaError = new clientPrisma.PrismaClientKnownRequestError(
-                "User education not found",
+                "Education record not found.",
                 {
                     code: "P2025",
                     clientVersion: "test"
@@ -152,7 +174,7 @@ describe("User repository - Education and certification test", () => {
             );
             (prisma.userEducation.update as jest.Mock).mockRejectedValue(prismaError);
             
-            expect(UserRepository.updateUserEducation(mockedUserId, mockedUserEducationId, mockedUpdateUserEducationSchema)).rejects.toThrow(NotFoundException);
+            await expect(UserRepository.updateUserEducation(mockedUserId, mockedUserEducationId, mockedUpdateUserEducationSchema)).rejects.toThrow(NotFoundException);
             expect(prisma.userEducation.update).toHaveBeenCalledWith({
                 where: { id: mockedUserEducationId, userId: mockedUserId  },
                 data: {
@@ -172,7 +194,7 @@ describe("User repository - Education and certification test", () => {
                 where: { id: mockedUserEducationId, userId: mockedUserId }
             });
         });
-        it("should throw not found exception if user education to be deleted wan not found", async () => {
+        it("should throw not found exception if user education to be deleted was not found", async () => {
             const prismaError = new clientPrisma.PrismaClientKnownRequestError(
                 "User education not found",
                 {
@@ -221,7 +243,7 @@ describe("User repository - Education and certification test", () => {
             );
             (prisma.userCertification.create as jest.Mock).mockRejectedValue(PrismaError);
 
-            expect(UserRepository.createUserCertification(mockedUserId, mockedCreateUserCertificationSchema)).rejects.toThrow(AlreadyExistsException)
+            await expect(UserRepository.createUserCertification(mockedUserId, mockedCreateUserCertificationSchema)).rejects.toThrow(AlreadyExistsException)
             expect(prisma.userCertification.create).toHaveBeenCalledWith({
                 data: {
                     userId: mockedUserId,
@@ -247,7 +269,27 @@ describe("User repository - Education and certification test", () => {
         });
         it("should throw an error if the updated user certification was not found", async () => {
             const prismaError = new clientPrisma.PrismaClientKnownRequestError(
-                "User certification not found",
+                "A certification record with these details already exists.",
+                {
+                    code: "P2002",
+                    clientVersion: "test"
+                }
+            );
+            (prisma.userCertification.update as jest.Mock).mockRejectedValue(prismaError);
+            
+            await expect(UserRepository.updateUserCertification(mockedUserId, mockedUserCertificationId, mockedUpdateUserCertificationSchema)).rejects.toThrow(AlreadyExistsException);
+            expect(prisma.userCertification.update).toHaveBeenCalledWith({
+                where: { id: mockedUserCertificationId, userId: mockedUserId  },
+                data: {
+                    certName: mockedUpdateUserCertificationSchema.cert_name,
+                    issuer: mockedUpdateUserCertificationSchema.issuer,
+                    issuedAt: mockedUpdateUserCertificationSchema.issued_date
+                }
+            });
+        });
+        it("should throw an error if the current  updated user certification alrady exist, belong to another user education", async () => {
+            const prismaError = new clientPrisma.PrismaClientKnownRequestError(
+                "Certification record not found",
                 {
                     code: "P2025",
                     clientVersion: "test"
@@ -255,7 +297,7 @@ describe("User repository - Education and certification test", () => {
             );
             (prisma.userCertification.update as jest.Mock).mockRejectedValue(prismaError);
             
-            expect(UserRepository.updateUserCertification(mockedUserId, mockedUserCertificationId, mockedUpdateUserCertificationSchema)).rejects.toThrow(NotFoundException);
+            await expect(UserRepository.updateUserCertification(mockedUserId, mockedUserCertificationId, mockedUpdateUserCertificationSchema)).rejects.toThrow(NotFoundException);
             expect(prisma.userCertification.update).toHaveBeenCalledWith({
                 where: { id: mockedUserCertificationId, userId: mockedUserId  },
                 data: {
@@ -273,7 +315,7 @@ describe("User repository - Education and certification test", () => {
                 where: { id: mockedUserCertificationId, userId: mockedUserId }
             });
         });
-        it("should throw not found exception if user certification to be deleted wan not found", async () => {
+        it("should throw not found exception if user certification to be deleted was not found", async () => {
             const prismaError = new clientPrisma.PrismaClientKnownRequestError(
                 "User certification not found",
                 {

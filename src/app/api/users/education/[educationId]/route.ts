@@ -1,3 +1,4 @@
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
@@ -26,6 +27,9 @@ export const PUT = IsAuthenticated<RouteContext<"/api/users/education/[education
         if (error instanceof NotFoundException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 404 })
         }
+        if (error instanceof AlreadyExistsException) {
+            return NextResponse.json({ success: false, error: error.message }, { status: 409 })
+        }
         return NextResponse.json({ success: false, error: "Something went wrong while updating user education." }, { status: 500 });
     }
 });
@@ -42,7 +46,7 @@ export const DELETE = IsAuthenticated<RouteContext<"/api/users/education/[educat
         if (error instanceof NotFoundException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 404 })
         }
-        return NextResponse.json({ success: false, error: "Something went wrong while updating user education." }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong while deleting user education." }, { status: 500 });
     }
 
 })

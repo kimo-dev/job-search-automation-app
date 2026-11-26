@@ -1,3 +1,4 @@
+import { AlreadyExistsException } from "@/exceptions/AlreadyExistsException";
 import { NotFoundException } from "@/exceptions/notFoundException";
 import { IsAuthenticated } from "@/middlewares/isAuthenticated";
 import { UserService } from "@/services/user-service";
@@ -26,6 +27,9 @@ export const PUT = IsAuthenticated<RouteContext<"/api/users/certifications/[cert
         if (error instanceof NotFoundException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 404 })
         }
+        if (error instanceof AlreadyExistsException) {
+            return NextResponse.json({ success: false, error: error.message }, { status: 409 })
+        }
         return NextResponse.json({ success: false, error: "Something went wrong while updating your certification." }, { status: 500 });
     }
 })
@@ -37,7 +41,7 @@ export const DELETE = IsAuthenticated<RouteContext<"/api/users/certifications/[c
             return NextResponse.json({ success: false, error: "Certification ID is required" }, { status: 400 });
         }
         await UserService.deleteUserCertification(user.userId, certificationId);
-        return NextResponse.json({ success: true,  message: "Certification deleted successfully" }, { status: 200 });
+        return NextResponse.json({ success: true, message: "Certification deleted successfully" }, { status: 200 });
     } catch (error) {
         if (error instanceof NotFoundException) {
             return NextResponse.json({ success: false, error: error.message }, { status: 404 })

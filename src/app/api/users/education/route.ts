@@ -10,7 +10,7 @@ export const GET = IsAuthenticated(async (_req: NextRequest, user) => {
 
         return NextResponse.json({ success: true, educations, message: "Education retrieved successfully" }, { status: 200 });
     } catch (error: any) {
-        return NextResponse.json({ success: false, error: "Something went wrong. Failed to get the user educaitons!" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong. Failed to get the user educations!" }, { status: 500 });
     }
 });
 
@@ -30,7 +30,7 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
         return NextResponse.json({ success: true, education, message: "Education added successfully" }, { status: 201 });
     } catch (error: any) {
         if (error instanceof AlreadyExistsException) {
-            return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+            return NextResponse.json({ success: false, error: error.message }, { status: 409 });
         }
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to add the user education!" }, { status: 500 });
     }

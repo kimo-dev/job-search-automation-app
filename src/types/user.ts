@@ -102,7 +102,7 @@ export const updateUserExperienceValidationSchema = z.object({
 
 
 export const createUserEducationValidationSchema = z.object({
-        degree: z.string().min(1, "Dgree is required"),
+        degree: z.string().min(1, "Degree is required"),
         field_of_study: z.string().min(1, "Field of study is required"),
         institution: z.string().min(1, "institution is required"),
         description: z.string().min(10, "description is too short must be more than 10 characters").max(200, "description must be less than 200 characters").optional(),
@@ -113,7 +113,7 @@ export const createUserEducationValidationSchema = z.object({
 });
 
 export const updateUserEducationValidationSchema = z.object({
-        degree: z.string().min(1, "Dgree is required").optional(),
+        degree: z.string().min(1, "Degree is required").optional(),
         field_of_study: z.string().min(1, "Field of study is required").optional(),
         institution: z.string().min(1, "institution is required").optional(),
         description: z.string().min(10, "description is too short must be more than 10 characters").max(200, "description must be less than 200 characters").optional(),
@@ -125,7 +125,7 @@ export const updateUserEducationValidationSchema = z.object({
 
 export const createUserCertificationsValidationSchema = z.object({
         cert_name: z.string().min(1, "certification name is required"),
-        issuer: z.string().min(1, "certiticaiton issuer is required"),
+        issuer: z.string().min(1, "certification issuer is required"),
         issued_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
                 message: "Date cannot be greater than today"
         }).optional().transform((date) => date && new Date(date))
@@ -134,7 +134,7 @@ export const createUserCertificationsValidationSchema = z.object({
 
 export const updateUserCertificationsValidationSchema = z.object({
         cert_name: z.string().min(1, "certification name is required").optional(),
-        issuer: z.string().min(1, "certiticaiton issuer is required").optional(),
+        issuer: z.string().min(1, "certification issuer is required").optional(),
         issued_date: z.iso.date().refine((date) => date <= new Date().toISOString().split("T")[0], {
                 message: "Date cannot be greater than today"
         }).optional().transform((date) => date && new Date(date))

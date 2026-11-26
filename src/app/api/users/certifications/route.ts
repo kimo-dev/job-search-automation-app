@@ -30,7 +30,7 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
         return NextResponse.json({ success: true, certification, message: "Certification added successfully" }, { status: 201 });
     } catch (error: any) {
         if (error instanceof AlreadyExistsException) {
-            return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+            return NextResponse.json({ success: false, error: error.message }, { status: 409 });
         }
         return NextResponse.json({ success: false, error: "Something went wrong. Failed to add the user certification!" }, { status: 500 });
     }

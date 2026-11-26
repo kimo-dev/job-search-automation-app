@@ -76,6 +76,13 @@ describe("testing user education and certification api endpoints", () => {
         description: "Distributed systems concentration.",
         grad_date: "2018-05-20",
     }
+    const mockedUpdateUserEducationSchemaAlreadyExist = {
+        degree: "Master of Science",
+        field_of_study: "Computer Science",
+        institution: "University of Washington",
+        description: "Distributed systems concentration.",
+        grad_date: "2018-05-20",
+    }
     const mockedUserCertificationId = "0eeb9e9d-1750-4904-96b9-f3bbc1fddc34";
     const mockedUserCertification: UserCertification =
     {
@@ -142,7 +149,7 @@ describe("testing user education and certification api endpoints", () => {
 
             expect(UserService.getAllUserEducations).toHaveBeenCalledWith(mockedUser.userId);
         });
-        it("should return an empty array if no user educaitons found", async () => {
+        it("should return an empty array if no user educations found", async () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
             (UserService.getAllUserEducations as jest.Mock).mockResolvedValue([]);
             const request = createRequest("/api/users/education", "GET");
@@ -234,7 +241,7 @@ describe("testing user education and certification api endpoints", () => {
                 }
             );
         });
-        it("should return 400 if the user education already exists", async () => {
+        it("should return 409 if the user education already exists", async () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
 
@@ -247,7 +254,7 @@ describe("testing user education and certification api endpoints", () => {
             const response = await UserEducationPOST(request, {});
             const result = await response.json();
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             expect(result.success).toBe(false);
             expect(result.error).toBe("This user education already exist");
 
@@ -400,6 +407,33 @@ describe("testing user education and certification api endpoints", () => {
                 }
             );
         });
+        it("should return 409 if the user education updated to an already existing education", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateUserEducation as jest.Mock).mockRejectedValue(
+                new AlreadyExistsException("An education record with these details already exists.")
+            );
+
+            const request = createRequest(
+                `/api/users/education/${mockedUserEducationId}`,
+                "PUT",
+                mockedUpdateUserEducationSchemaAlreadyExist,
+            );
+
+            const response = await UserEducationPUT(request, createContext("educationId", mockedUserEducationId));
+            const responseBody = await response.json();
+            expect(response.status).toBe(409);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("An education record with these details already exists.");
+
+            expect(UserService.updateUserEducation).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedUserEducationId,
+                {
+                    ...mockedUpdateUserEducationSchema,
+                    grad_date: new Date(mockedUpdateUserEducationSchemaAlreadyExist.grad_date),
+                }
+            );
+        });
         it("should return 500 if updating the user education fails with unexpected error", async () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
             (UserService.updateUserEducation as jest.Mock).mockRejectedValue(
@@ -530,7 +564,7 @@ describe("testing user education and certification api endpoints", () => {
             expect(response.status).toBe(500);
             expect(responseBody.success).toBe(false);
             expect(responseBody.error).toBe(
-                "Something went wrong while updating user education."
+                "Something went wrong while deleting user education."
             );
             expect(UserService.deleteUserEducation).toHaveBeenCalledWith(
                 mockedUser.userId,
@@ -664,7 +698,7 @@ describe("testing user education and certification api endpoints", () => {
                 }
             );
         });
-        it("should return 400 if the user certification already exists", async () => {
+        it("should return 409 if the user certification already exists", async () => {
 
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
 
@@ -677,7 +711,7 @@ describe("testing user education and certification api endpoints", () => {
             const response = await UserCertificationPOST(request, {});
             const result = await response.json();
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             expect(result.success).toBe(false);
             expect(result.error).toBe("This user certification already exist");
 
@@ -805,7 +839,7 @@ describe("testing user education and certification api endpoints", () => {
         it("should return 404 if the user certification does not exist", async () => {
             (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
             (UserService.updateUserCertification as jest.Mock).mockRejectedValue(
-                new NotFoundException("User certification not found")
+                new NotFoundException("Certification record not found")
             );
 
             const request = createRequest(
@@ -819,7 +853,35 @@ describe("testing user education and certification api endpoints", () => {
 
             expect(response.status).toBe(404);
             expect(responseBody.success).toBe(false);
-            expect(responseBody.error).toBe("User certification not found");
+            expect(responseBody.error).toBe("Certification record not found");
+
+            expect(UserService.updateUserCertification).toHaveBeenCalledWith(
+                mockedUser.userId,
+                mockedUserCertificationId,
+                {
+                    ...mockedUpdateUserCertificationSchema,
+                    issued_date: new Date(mockedUpdateUserCertificationSchema.issued_date),
+                }
+            );
+        });
+        it("should return 409 if the updated user certification already belong to another one, already exist", async () => {
+            (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockedUser);
+            (UserService.updateUserCertification as jest.Mock).mockRejectedValue(
+                new AlreadyExistsException("A certification record with these details already exists.")
+            );
+
+            const request = createRequest(
+                `/api/users/certifications/${mockedUserCertificationId}`,
+                "PUT",
+                mockedUpdateUserCertificationSchema,
+            );
+
+            const response = await UserCertificationPUT(request, createContext("certificationId", mockedUserCertificationId));
+            const responseBody = await response.json();
+
+            expect(response.status).toBe(409);
+            expect(responseBody.success).toBe(false);
+            expect(responseBody.error).toBe("A certification record with these details already exists.");
 
             expect(UserService.updateUserCertification).toHaveBeenCalledWith(
                 mockedUser.userId,
