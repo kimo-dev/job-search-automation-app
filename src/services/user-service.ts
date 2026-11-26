@@ -1,6 +1,12 @@
-import { UserCertification, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
+import { UserCertification, UserCV, UserEducation, UserExperience, UserProfile, UserSkill } from "@/generated/prisma/client";
 import { UserRepository } from "@/repository/user-repository";
 import { createSkillSchema, createUserCertificationsSchema, createUserEducationSchema, createUserExperienceSchema, updateSkillSchema, updateUserCertificationsSchema, updateUserEducationSchema, updateUserExperienceSchema, UserProfileSchema } from "@/types/user";
+import { FileStorageService } from "./FileStorage-service";
+import { CVParser } from "@/utils/cvParser";
+import { MapCvSectionsMapper, MapUserCVResponse } from "@/mappers/cv-mapper";
+import { ReturnedParsedData, ReturnedSaveToStorageType } from "@/types/file";
+import { FileCleanupException } from "@/exceptions/fileCleanupException";
+import { NotFoundException } from "@/exceptions/notFoundException";
 
 export class UserService {
 
@@ -96,5 +102,50 @@ export class UserService {
 
     static async deleteUserCertification(userId: string, certificationId: string): Promise<void> {
         await UserRepository.deleteUserCertification(userId, certificationId);
+    }
+
+    static async uploadAndParse(file: File, userId: string) : Promise<ReturnedParsedData> {
+
+        let result : ReturnedSaveToStorageType | null = null;
+       try {
+            const a = await UserRepository.checkAlreadyUploaded(userId);
+            result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
+
+            const rawData  = await CVParser.parseCvData(file, result.buffer);
+
+            const extractedData = await CVParser.parseCvSections(rawData);
+            const parsedData = new MapCvSectionsMapper().map(extractedData);
+
+            const savedCV = await UserRepository.saveExtractedData(parsedData, result, userId);
+
+            return new MapUserCVResponse().map({
+                savedCV, parsedData
+            });
+
+       } catch (error) {
+            try {
+                if(result !== null){
+                    await FileStorageService.DeleteFromStorage(result.fileKey)
+                }
+            } catch(cleanupError){
+                throw new FileCleanupException(error, cleanupError);
+            }
+            throw error;
+       }
+
+
+    }
+
+    static async getUserCV(userId: string) : Promise<UserCV> {
+        return await UserRepository.getUserCV(userId);
+    }
+
+    static async deleteUserMetada(userId: string, cvId: string): Promise<void> {
+        const cv = await UserRepository.getUserCV(userId);
+        if(!cv){
+            throw new NotFoundException("CV not found");
+        }
+        await FileStorageService.DeleteFromStorage(cv.fileUrl)
+        await UserRepository.deleteUserMetada(userId, cvId);
     }
 }
