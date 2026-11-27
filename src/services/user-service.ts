@@ -108,7 +108,7 @@ export class UserService {
 
         let result : ReturnedSaveToStorageType | null = null;
        try {
-            const a = await UserRepository.checkAlreadyUploaded(userId);
+            await UserRepository.checkAlreadyUploaded(userId);
             result = await FileStorageService.SaveToStorage(userId, "uploads", "cv", file);
 
             const rawData  = await CVParser.parseCvData(file, result.buffer);
@@ -139,13 +139,15 @@ export class UserService {
     static async getUserCV(userId: string) : Promise<UserCV> {
         return await UserRepository.getUserCV(userId);
     }
+    
 
     static async deleteUserMetada(userId: string, cvId: string): Promise<void> {
-        const cv = await UserRepository.getUserCV(userId);
-        if(!cv){
+        const cv = await UserRepository.getUserCVById(userId, cvId);
+
+        if (!cv) {
             throw new NotFoundException("CV not found");
         }
-        await FileStorageService.DeleteFromStorage(cv.fileUrl)
         await UserRepository.deleteUserMetada(userId, cvId);
+        await FileStorageService.DeleteFromStorage(cv.fileUrl);
     }
 }

@@ -42,7 +42,7 @@ export const POST = IsAuthenticated(async (req: NextRequest, user) => {
             }, { status: 400 });
         }
         const result = await UserService.uploadAndParse(file, user.userId);
-        return NextResponse.json({ success: true, result, message: "CV metadata retrieved"}, { status: 200 });
+        return NextResponse.json({ success: true, result, message: "CV metadata retrieved"}, { status: 201 });
     } catch (error) {
         if( error instanceof FileCleanupException){
             return NextResponse.json({ success: false, error: "CV proccessing failed and the uploaded file could not be deleted" }, { status: error.statusCode });

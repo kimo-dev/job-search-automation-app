@@ -52,19 +52,19 @@ export class UserRepository {
         return skills;
     }
 
-    static async createSkill(userId: string,data: createSkillSchema): Promise<UserSkill> {
+    static async createSkill(userId: string, data: createSkillSchema): Promise<UserSkill> {
         try {
             const skill = await prisma.userSkill.create({
-            data: {
-                userId: userId,
-                skillName: data.skill_name,
-                proficiency: data.proficiency ?? "beginner",
-                yearsExp: data.years_exp ?? 0
+                data: {
+                    userId: userId,
+                    skillName: data.skill_name,
+                    proficiency: data.proficiency ?? "beginner",
+                    yearsExp: data.years_exp ?? 0
                 }
             });
             return skill;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new AlreadyExistsException(
                     "This skill already exist"
                 );
@@ -127,11 +127,11 @@ export class UserRepository {
                     endDate: data.end_date,
                     description: data.description,
                     isCurrent: data.is_current ?? false
-                    }
+                }
             });
-        return userExperience;
+            return userExperience;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new AlreadyExistsException(
                     "This user experience already exist"
                 );
@@ -187,21 +187,21 @@ export class UserRepository {
         return userEducations;
     }
 
-    static async createUserEducation(userId: string,data: createUserEducationSchema): Promise<UserEducation> {
+    static async createUserEducation(userId: string, data: createUserEducationSchema): Promise<UserEducation> {
         try {
             const education = await prisma.userEducation.create({
-            data: {
-                userId: userId,
-                degree: data.degree,
-                fieldOfStudy: data.field_of_study,
-                institution: data.institution,
-                description: data.description,
-                gradDate: data.grad_date
+                data: {
+                    userId: userId,
+                    degree: data.degree,
+                    fieldOfStudy: data.field_of_study,
+                    institution: data.institution,
+                    description: data.description,
+                    gradDate: data.grad_date
                 }
             });
             return education;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new AlreadyExistsException(
                     "This user education already exist"
                 );
@@ -257,19 +257,19 @@ export class UserRepository {
     }
 
 
-    static async createUserCertification(userId: string,data: createUserCertificationsSchema): Promise<UserCertification> {
+    static async createUserCertification(userId: string, data: createUserCertificationsSchema): Promise<UserCertification> {
         try {
             const certification = await prisma.userCertification.create({
-            data: {
-                userId: userId,
-                certName: data.cert_name,
-                issuer: data.issuer,
-                issuedAt: data.issued_date
+                data: {
+                    userId: userId,
+                    certName: data.cert_name,
+                    issuer: data.issuer,
+                    issuedAt: data.issued_date
                 }
             });
             return certification;
         } catch (error) {
-            if ( error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new AlreadyExistsException(
                     "This user certification already exist"
                 );
@@ -315,72 +315,95 @@ export class UserRepository {
     }
 
     static async checkAlreadyUploaded(userId: string): Promise<UserCV | null> {
-            const userCV = await prisma.userCV.findFirst({
-                where: { userId }
-            });
-            if(userCV){
-                throw new CVAlreadyUploadedException("You already uploaded a cv");
-            }
-            return null;
-        
+        const userCV = await prisma.userCV.findFirst({
+            where: { userId }
+        });
+        if (userCV) {
+            throw new CVAlreadyUploadedException("You already uploaded a cv");
+        }
+        return null;
+
     }
 
-    static async saveExtractedData(parsedData: ParsedCvData, fileInfo: ReturnedSaveToStorageType, userId: string) : Promise<UserCV>{
-        const [savedCV] = await prisma.$transaction([
-            prisma.userCV.create({
-                data: {
-                    userId: userId,
-                    fileUrl: fileInfo.fileKey,
-                    fileName: fileInfo.fileName,
-                    fileSize: fileInfo.fileSize,
+    static async saveExtractedData(parsedData: ParsedCvData, fileInfo: ReturnedSaveToStorageType, userId: string): Promise<UserCV> {
+        return await prisma.$transaction(async (tx) => {
+            let savedCV: UserCV;
+            try {
+                savedCV = await tx.userCV.create({
+                    data: {
+                        userId: userId,
+                        fileUrl: fileInfo.fileKey,
+                        fileName: fileInfo.fileName,
+                        fileSize: fileInfo.fileSize,
+                    }
+                });
+            } catch (error) {
+                if (
+                    error instanceof Prisma.PrismaClientKnownRequestError &&
+                    error.code === "P2002"
+                ) {
+                    throw new CVAlreadyUploadedException("You already uploaded a cv");
                 }
-            }),
-            prisma.userSkill.createMany({
-                data: parsedData.skills.map((row) => ({ 
+
+                throw error;
+            }
+
+            await tx.userSkill.createMany({
+                data: parsedData.skills.map((row) => ({
                     userId: userId,
+                    cvId: savedCV.id,
                     skillName: row.skill_name,
                     proficiency: row.profiency ?? "beginner",
                     yearsExp: row.years_exp ?? 0
-                 })),
+                })),
+                skipDuplicates: true
             }),
-            prisma.userExperience.createMany({
-                data: parsedData.experiences.map((row) => ({ 
-                    userId: userId,
-                    jobTitle: row.job_title ?? "Not Specified",
-                    companyName: row.company_name ?? "Not Specified",
-                    startDate: row.start_date,
-                    endDate: row.end_date,
-                    isCurrent: row.is_current ?? false,
-                    description: row.description ?? ""
-                 }))
-            }),
-            prisma.userEducation.createMany({
-                data: parsedData.educations.map((row) => ({
-                    userId: userId,
-                    degree: row.degree ?? "",
-                    fieldOfStudy: row.field_of_study ?? "",
-                    institution: row.institution ?? "",
-                    description: row.description ?? "",
-                    gradDate: row.grad_date,
+                await tx.userExperience.createMany({
+                    data: parsedData.experiences.map((row) => ({
+                        userId: userId,
+                        cvId: savedCV.id,
+                        jobTitle: row.job_title ?? "Not Specified",
+                        companyName: row.company_name ?? "Not Specified",
+                        startDate: row.start_date,
+                        endDate: row.end_date,
+                        isCurrent: row.is_current ?? false,
+                        description: row.description ?? ""
+                    })),
+                    skipDuplicates: true
+                }),
+                await tx.userEducation.createMany({
+                    data: parsedData.educations.map((row) => ({
+                        userId: userId,
+                        cvId: savedCV.id,
+                        degree: row.degree ?? "",
+                        fieldOfStudy: row.field_of_study ?? "",
+                        institution: row.institution ?? "",
+                        description: row.description ?? "",
+                        gradDate: row.grad_date,
 
-                }))
-            }),
-            prisma.userCertification.createMany({
-                data: parsedData.certifications.map((row) => ({
-                    userId: userId,
-                    certName: row.cert_name,
-                    issuer: row.issuer ?? "",
-                    issuedAt: row.issued_date
-                }))
-            })
-            
-        ]);
-        return savedCV;
+                    })),
+                    skipDuplicates: true
+                }),
+                await tx.userCertification.createMany({
+                    data: parsedData.certifications.map((row) => ({
+                        userId: userId,
+                        cvId: savedCV.id,
+                        certName: row.cert_name,
+                        issuer: row.issuer ?? "",
+                        issuedAt: row.issued_date
+                    })),
+                    skipDuplicates: true
+                })
+            return savedCV;
+
+        });
     }
 
     static async getUserCV(userId: string): Promise<UserCV> {
-        const userCV = await prisma.userCV.findUnique({
-            where: { userId }
+        const userCV = await prisma.userCV.findFirst({
+            where: {
+                userId: userId,
+            }
         });
         if (!userCV) {
             throw new NotFoundException(`Your cv was not found. Try uploading One`)
@@ -389,34 +412,55 @@ export class UserRepository {
 
     }
 
-    static async deleteUserMetada(userId: string, cvId: string) : Promise<void> {
-        try {
-            return await prisma.$transaction(async (tx) => {
-                await tx.userCV.delete({
-                    where: { id: cvId ,userId: userId }
-                });
-                await tx.userSkill.deleteMany({
-                    where: { userId }
-                });
-                await tx.userExperience.deleteMany({
-                    where: {userId}
-                });
-                await tx.userEducation.deleteMany({
-                    where: { userId }
-                });
-                await tx.userCertification.deleteMany({
-                    where: { userId }
-                });
-            });
-        } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-                throw new NotFoundException(
-                    "CV not found "
-                );
-            }
-            throw error;
+    static async getUserCVById(userId: string, cvId: string): Promise<UserCV | null> {
+        const userCV =  prisma.userCV.findFirst({
+            where: {
+                id: cvId,
+                userId,
+            },
+        });
+        if (!userCV) {
+            throw new NotFoundException(`Your cv was not found. Try uploading One`)
         }
+        return userCV;
     }
 
-    
+    static async deleteUserMetada(userId: string, cvId: string): Promise<string> {
+            return await prisma.$transaction(async (tx) => {
+                const cv = await tx.userCV.findFirst({
+                    where: {
+                        id: cvId,
+                        userId,
+                    },
+                    select: {
+                        fileUrl: true,
+                    },
+                });
+
+                if (!cv) {
+                    throw new NotFoundException("CV not found");
+                }
+               
+                await tx.userSkill.deleteMany({
+                    where: { userId, cvId }
+                });
+                await tx.userExperience.deleteMany({
+                    where: { userId, cvId }
+                });
+                await tx.userEducation.deleteMany({
+                    where: { userId, cvId }
+                });
+                await tx.userCertification.deleteMany({
+                    where: { userId, cvId }
+                });
+                 await tx.userCV.delete({
+                    where: { id: cvId, userId: userId }
+                });
+
+                return cv.fileUrl;
+            });
+       
+    }
+
+
 }

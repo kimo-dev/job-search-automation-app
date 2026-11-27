@@ -3,7 +3,7 @@ import path from "path";
 import z, { string } from "zod";
 import { GlobalFields } from "./global";
 
-const AcceptedTypes = ["pdf", "doc"];
+const AcceptedTypes = ["pdf", "doc", "docx"];
 const MX_File_Sise = 10 * 1024 * 1024;
 const isFile = (value: unknown): value is File =>
     typeof File !== "undefined" && value instanceof File;

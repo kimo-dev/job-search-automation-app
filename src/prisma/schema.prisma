@@ -46,6 +46,11 @@ model UserCV {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
+  skills         UserSkill[]
+  experiences    UserExperience[]
+  educations     UserEducation[]
+  certifications UserCertification[]
+
   user      User @relation(fields: [userId], references: [id])
 }
 
@@ -69,6 +74,7 @@ model UserProfile {
 model UserSkill {
   id          String      @id @default(uuid())
   userId      String
+  cvId        String?
   skillName   String
   proficiency String
   yearsExp    Int
@@ -76,13 +82,16 @@ model UserSkill {
   updatedAt   DateTime @default(now())
 
   user        User @relation(fields: [userId], references: [id])
+  cv          UserCV? @relation(fields: [cvId], references: [id])
 
   @@unique([userId, skillName])
+  @@index([userId, cvId])
 }
 
 model UserExperience {
   id          String      @id @default(uuid())
   userId      String
+  cvId        String?
   jobTitle    String
   companyName String
   startDate   DateTime?
@@ -93,13 +102,17 @@ model UserExperience {
   updatedAt   DateTime @default(now())
 
   user        User @relation(fields: [userId], references: [id])
+  cv          UserCV? @relation(fields: [cvId], references: [id])
+
 
   @@unique([userId, companyName, startDate])
+  @@unique([userId, cvId])
 }
 
 model UserEducation {
   id            String      @id @default(uuid())
   userId        String
+  cvId          String?
   degree        String
   fieldOfStudy  String
   institution   String
@@ -109,14 +122,17 @@ model UserEducation {
   updatedAt     DateTime @default(now())
 
   user        User @relation(fields: [userId], references: [id])
+  cv          UserCV? @relation(fields: [cvId], references: [id])
 
   @@unique([userId, degree, fieldOfStudy, institution, gradDate])
+  @@unique([userId, cvId])
 
 }
 
 model UserCertification {
   id            String      @id @default(uuid())
   userId        String
+  cvId          String?
   certName      String
   issuer        String
   issuedAt      DateTime?
@@ -124,8 +140,10 @@ model UserCertification {
   updatedAt     DateTime @default(now())
 
   user        User @relation(fields: [userId], references: [id])
+  cv          UserCV? @relation(fields: [cvId], references: [id])
 
   @@unique([userId, certName, issuer, issuedAt])
+  @@unique([userId, cvId])
 
 
 }
